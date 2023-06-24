@@ -1,12 +1,21 @@
-use redis::{Connection, RedisResult, Commands};
-use redis::streams::{StreamClaimOptions, StreamClaimReply, StreamPendingCountReply, StreamPendingId, StreamReadOptions, StreamReadReply, StreamKey, StreamId};
-use log;
+use redis::{Connection, RedisResult, Commands, RedisError};
+use redis::streams::{
+    StreamClaimOptions,
+    StreamClaimReply,
+    StreamPendingCountReply,
+    StreamPendingId,
+    StreamReadOptions,
+    StreamReadReply,
+    StreamKey,
+    StreamId,
+};
+use log::{debug, warn, error};
 use tokio::time::{Duration, sleep};
 
-use super::client::RedisClient;
+use crate::streams::client::RedisClient;
 
 pub type StreamMessage = StreamId;
-pub type RedisConsumerResult<T, String> = Result<T, String>;
+pub type RedisConsumerResult<T> = RedisResult<T>;
 
 pub struct RedisStreamsConsumer {
     client: RedisClient,
@@ -141,24 +150,16 @@ impl RedisStreamsConsumer {
         block: Option<u16>,
         max_wait_seconds_for_stream: Option<u8>,
     ) -> RedisStreamsConsumer {
-        let db: String = db.unwrap_or("0".to_string());
-        let client: RedisClient = RedisClient::init(url, db);
-        let latest_id: String = latest_id.unwrap_or("0-0".to_string());
-        let max_wait_seconds_for_stream: u8 = max_wait_seconds_for_stream.unwrap_or(20u8);
-        let min_idle_time_milliseconds: u16 = min_idle_time_milliseconds.unwrap_or(5000u16);
-        let count: u16 = count.unwrap_or(5000u16);
-        let block: u16 = block.unwrap_or(2000u16);
-
-        return RedisStreamsConsumer {
-            client,
+        RedisStreamsConsumer {
+            client: RedisClient::init(url, db.unwrap_or("0".to_string())),
             stream_name,
             group_name,
             consumer_name,
-            latest_id,
-            max_wait_seconds_for_stream,
-            min_idle_time_milliseconds,
-            count,
-            block,
+            latest_id: latest_id.unwrap_or("0-0".to_string()),
+            max_wait_seconds_for_stream: max_wait_seconds_for_stream.unwrap_or(20u8),
+            min_idle_time_milliseconds: min_idle_time_milliseconds.unwrap_or(5000u16),
+            count: count.unwrap_or(5000u16),
+            block: block.unwrap_or(2000u16),
             stream_ready: false,
         }
     }
@@ -166,36 +167,38 @@ impl RedisStreamsConsumer {
     async fn wait_for_stream(
         &self,
     ) {
-        const TIME_DELTA: u8 = 5;
-        let mut step: u8 = 0;
-        let mut wait_time: u8;
-
-        let mut conn: Connection = self.client.get_conn();
         let mut is_ready: bool = false;
+        let time_delta: u8 = self.max_wait_seconds_for_stream/5;
+        let mut step: u8 = 0;
 
-        log::debug!("Checking stream {}", self.stream_name);
+        let mut conn: Connection = self.client.get_conn().await;
+
+        debug!("Checking stream {}", self.stream_name);
         while !is_ready {
             let stream_ready: RedisResult<bool> = conn.exists(self.stream_name.clone());
             match stream_ready {
                 Ok(v) => {
                     if v {
-                        log::debug!("Stream {} is ready", self.stream_name);
+                        debug!("Stream {} is ready", self.stream_name);
                         is_ready = true;
+
                     } else {
-                        log::warn!("Stream {} is not ready yet", self.stream_name);
+                        warn!("Stream {} is not ready yet", self.stream_name);
+
                         step += 1;
-                        wait_time = TIME_DELTA * step;
+                        let wait_time:u8 = time_delta * step;
+
                         if wait_time > self.max_wait_seconds_for_stream {
                             panic!("Stream {} was not found", self.stream_name);
                         };
 
-                        log::warn!("Waiting for stream {} for {} seconds", self.stream_name, wait_time);
+                        warn!("Waiting for stream {} for {} seconds", self.stream_name, wait_time);
                         sleep(Duration::from_secs(wait_time as u64)).await;
                     }
                     
                 },
                 Err(e) => {
-                    log::error!("Fatal error: {}", e);
+                    error!("Fatal error: {}", e);
                     panic!("{}", e);
                 }
             }
@@ -205,8 +208,9 @@ impl RedisStreamsConsumer {
     async fn wait_for_consumer_group(
         &self,
     ) {
-        log::debug!("Checking consumer group {}", self.group_name);
-        let consumer_group: RedisResult<bool> = self.client.get_conn()
+        debug!("Checking consumer group {}", self.group_name);
+
+        let consumer_group: RedisResult<bool> = self.client.get_conn().await
             .xgroup_create(
                 self.stream_name.clone(),
                 self.group_name.clone(),
@@ -214,17 +218,17 @@ impl RedisStreamsConsumer {
             );
         match consumer_group {
             Ok(_) => {
-                log::debug!("Consumer group {} created successfully", self.group_name);
+                debug!("Consumer group {} created successfully", self.group_name);
             },
-            Err(_) => log::debug!("Consumer group {} already exists", self.group_name),
+            Err(_) => debug!("Consumer group {} already exists", self.group_name),
         };
     }
 
     async fn autoclaim(
         &self,
-    ) -> Result<bool, String> {
+    ) -> Option<RedisError> {
         let mut ids_to_claim: Vec<String> = Vec::new();
-        let pending_messages: RedisResult<StreamPendingCountReply> = self.client.get_conn()
+        let pending_messages: RedisResult<StreamPendingCountReply> = self.client.get_conn().await
             .xpending_count(
                 self.stream_name.clone(),
                 self.group_name.clone(),
@@ -238,18 +242,18 @@ impl RedisStreamsConsumer {
                 ids_to_claim.push(ids.id.clone());
             };
         } else {
-            log::error!("Error reading pending stream messages from stream {} for consumer {} in consumer group {}",
+            error!("Error reading pending stream messages from stream {} for consumer {} in consumer group {}",
                 self.stream_name.clone(),
                 self.consumer_name.clone(),
                 self.group_name.clone(),
             );
-            return Err(pending_messages.unwrap_err().to_string());
+            return Some(pending_messages.unwrap_err());
         };
 
-        log::debug!("Total {} pending messages to be claimed", {ids_to_claim.len().to_string()});
+        debug!("Total {} pending messages to be claimed", {ids_to_claim.len().to_string()});
         if ids_to_claim.len() > 0 {
             let xclaim_opts: StreamClaimOptions = StreamClaimOptions::default();
-            let claimed_messages: RedisResult<StreamClaimReply> = self.client.get_conn()
+            let claimed_messages: RedisResult<StreamClaimReply> = self.client.get_conn().await
                 .xclaim_options(
                     self.stream_name.clone(),
                     self.group_name.clone(),
@@ -259,36 +263,36 @@ impl RedisStreamsConsumer {
                     xclaim_opts,
                 );
             if claimed_messages.is_err() {
-                log::error!("Error claiming pending stream messages from stream {} for consumer {} in consumer group {}",
+                error!("Error claiming pending stream messages from stream {} for consumer {} in consumer group {}",
                     self.stream_name.clone(),
                     self.consumer_name.clone(),
                     self.group_name.clone(),
                 );
-                return Err(claimed_messages.unwrap_err().to_string())
+                return Some(claimed_messages.unwrap_err())
         };
         }
 
-        return Ok(true);
+        None
 
     }
 
     async fn xread_group(
         &self,
-    ) -> Result<Vec<StreamId>, String> {
+    ) -> Result<Vec<StreamId>, RedisError> {
         let mut messages: Vec<StreamId> = Vec::new();
 
         let xread_opts: &StreamReadOptions = &StreamReadOptions::default()
-        .group(self.group_name.clone(), self.consumer_name.clone())
-        .block(self.block.clone().into());
+            .group(self.group_name.clone(), self.consumer_name.clone())
+            .block(self.block.clone().into());
 
-        let pending_messages: RedisResult<StreamReadReply> = self.client.get_conn()
+        let pending_messages_result: RedisResult<StreamReadReply> = self.client.get_conn().await
             .xread_options(
                 &[self.stream_name.clone()],
                 &[self.latest_id.clone()],
                 xread_opts,
             );
-        if pending_messages.is_ok() {
-            let messages_keys: Vec<StreamKey> = pending_messages.unwrap().keys;
+        if pending_messages_result.is_ok() {
+            let messages_keys: Vec<StreamKey> = pending_messages_result.unwrap().keys;
             for stream_key in messages_keys.iter() {
                 if stream_key.key == self.stream_name.clone() {
                     for id in stream_key.ids.iter() {
@@ -297,11 +301,11 @@ impl RedisStreamsConsumer {
                 };
             };
         } else {
-            log::error!("Error reading pending messages");
-            return Err(pending_messages.unwrap_err().to_string());
+            error!("Error reading pending messages");
+            return Err(pending_messages_result.unwrap_err());
         };
 
-        let new_messages: RedisResult<StreamReadReply> = self.client.get_conn()
+        let new_messages: RedisResult<StreamReadReply> = self.client.get_conn().await
             .xread_options(
                 &[self.stream_name.clone()],
                 &[">"],
@@ -317,11 +321,11 @@ impl RedisStreamsConsumer {
                 };
             };
         } else {
-            log::error!("Error reading new stream messages");
-            return Err(new_messages.unwrap_err().to_string());
+            error!("Error reading new stream messages");
+            return Err(new_messages.unwrap_err());
         };
 
-        log::debug!("Total {} messages readed", messages.len());
+        debug!("Total {} messages readed", messages.len());
         return Ok(messages);
 
     }
@@ -335,9 +339,9 @@ impl RedisStreamsConsumer {
     /// ```
     /// ## Returns:
     /// ```text
-    ///     RedisConsumerResult<Vec<StreamMessage>, String> = Result<Vec<StreamId>, String>
+    ///     RedisConsumerResult<Vec<StreamMessage>> = RedisResult<Vec<StreamId>>
     ///         Ok(v: Vec<StreamId>) // See StreamId documentation in redis-rs.
-    ///         Err(e: String) // error message
+    ///         Err(e: RedisError) // Redis error
     /// ```
     /// 
     /// ## Basic Usages:
@@ -367,28 +371,28 @@ impl RedisStreamsConsumer {
     ///         max_wait_seconds_for_stream,
     ///     );
     /// 
-    ///     let pending_messages: RedisConsumerResult<Vec<StreamId>, String> = consumer.consume().await;
+    ///     let pending_messages: RedisConsumerResult<Vec<StreamId>> = consumer.consume().await;
     /// ```
     pub async fn consume(
         &mut self,
-    ) -> RedisConsumerResult<Vec<StreamMessage>, String> {
+    ) -> RedisConsumerResult<Vec<StreamMessage>> {
         if !self.stream_ready {
             self.wait_for_stream().await;
             self.wait_for_consumer_group().await;
         };
         self.stream_ready = true;
-        log::debug!("Stream {} ready: {}", self.stream_name, self.stream_ready);
+        debug!("Stream {} ready: {}", self.stream_name, self.stream_ready);
 
-        let err: Result<bool, String> = self.autoclaim().await;
-        if err.is_err() {
-            log::error!("Error autoclaiming pending messages");
-            return Err(err.unwrap_err().clone());
+        let err: Option<RedisError> = self.autoclaim().await;
+        if err.is_some() {
+            error!("Error autoclaiming pending messages");
+            return Err(err.unwrap());
         };
 
-       let messages: Result<Vec<StreamId>, String> = self.xread_group().await;
+       let messages: Result<Vec<StreamId>, RedisError> = self.xread_group().await;
         if messages.is_err() {
             log::error!("Error reading stream messages");
-            return Err(messages.unwrap_err().clone());
+            return Err(messages.unwrap_err());
         }
 
         return Ok(messages.unwrap());
@@ -403,9 +407,9 @@ impl RedisStreamsConsumer {
     /// ```
     /// ## Returns:
     /// ```text
-    ///     RedisConsumerResult<u8, String> = Result<u8, String>
-    ///         Ok(v: u8)  // message id (e.g: 1u8 or 0u8)
-    ///         Err(e: String) // error message
+    ///     RedisConsumerResult<RV> = RedisResult<RV>
+    ///         Ok(v: T)  // message id (e.g: 1u8 or 0u8)
+    ///         Err(e: RedisError) // Redis
     /// ```
     /// 
     /// ## Basic Usages:
@@ -435,22 +439,24 @@ impl RedisStreamsConsumer {
     ///         max_wait_seconds_for_stream,
     ///     );
     /// 
-    ///     let flag RedisConsumerResult<u8, String> = consumer.acknowledge("1684081214635-0".to_string()).await;
+    ///     let flag RedisConsumerResult<u8> = consumer.acknowledge("1684081214635-0".to_string()).await;
     /// ```
-    pub async fn acknowledge (
+    pub async fn acknowledge<
+        RV: redis::FromRedisValue + std::fmt::Debug,
+    > (
         &self,
         id: String,
-    ) -> RedisConsumerResult<u8, String> {
-        let acknowledge_id: RedisResult<u8> = self.client.get_conn()
+    ) -> RedisConsumerResult<RV> {
+        let acknowledge_result: RedisResult<RV> = self.client.get_conn().await
             .xack(
                 self.stream_name.clone(),
                 self.group_name.clone(),
                 &[id.as_str()],
             );
-        if acknowledge_id.is_err() {
-            return Err(acknowledge_id.unwrap_err().to_string());
+        if acknowledge_result.is_err() {
+            return Err(acknowledge_result.unwrap_err());
         }
 
-        return Ok(acknowledge_id.unwrap());
+        return Ok(acknowledge_result.unwrap());
     }
 }
