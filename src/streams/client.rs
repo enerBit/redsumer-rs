@@ -6,19 +6,25 @@ pub struct RedisClient {
 }
 
 impl RedisClient {
-    pub fn get_conn(&self) -> Connection {
-        let conn: Connection = Client::open(format!("redis://{}/{}", self.url, self.db))
-            .expect(&format!("Error getting Redis client from url={} and db={}", self.url, self.db))
-            .get_connection()
-            .expect(&format!("Error establishing connection to Redis server redis://{}/{}", self.url, self.db,));
+    pub async fn get_conn(&self) -> Connection {
+        let host: String = format!("redis://{}/{}", self.url, self.db);
 
-        return conn;
+        Client::open(
+            host.clone(),
+        )
+            .expect(
+                &format!("Error getting Redis client from host {}", host.clone()),
+            )
+            .get_connection()
+            .expect(
+                &format!("Error establishing connection to Redis server redis")
+            )
     }
 
     pub fn init(url: String, db: String) -> RedisClient {
-        return RedisClient {
+        RedisClient {
             url,
             db,
-        };
+        }
     }
 }
