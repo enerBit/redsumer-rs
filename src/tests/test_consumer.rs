@@ -2,8 +2,7 @@
 mod tests {
     use tokio::test;
 
-    use super::super::super::*;
-    use streams::consumer::{RedisStreamsConsumer, RedisConsumerResult, StreamMessage};
+    use crate::streams::consumer::{RedisStreamsConsumer, RedisConsumerResult, StreamMessage};
 
     use env_logger;
 
@@ -14,7 +13,7 @@ mod tests {
             .init();
 
         let url: String = String::from("localhost:6379");
-        let stream_name: String = String::from("test-redsumer-rs");
+        let stream_name: String = String::from("test-redsumer-rs2");
         let group_name: String = String::from("test-group-name");
         let consumer_name: String = String::from("redsumer-rs-consumer");
 
@@ -31,10 +30,10 @@ mod tests {
             None,
         );
 
-        let pending_messages: RedisConsumerResult<Vec<StreamMessage>, String>= consumer.consume().await;
+        let pending_messages: RedisConsumerResult<Vec<StreamMessage>>= consumer.consume().await;
         assert!(pending_messages.is_ok());
         
-        let akcn_id: RedisConsumerResult<u8, String> = consumer.acknowledge("1684081214635-0".to_string()).await;
+        let akcn_id: RedisConsumerResult<u8> = consumer.acknowledge("1684081214635-0".to_string()).await;
         assert!(akcn_id.is_ok());
     }
 
