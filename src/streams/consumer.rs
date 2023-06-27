@@ -3,10 +3,8 @@ use redis::streams::{
     StreamClaimOptions,
     StreamClaimReply,
     StreamPendingCountReply,
-    StreamPendingId,
     StreamReadOptions,
     StreamReadReply,
-    StreamKey,
     StreamId,
 };
 use log::{debug, warn, error};
@@ -228,106 +226,68 @@ impl RedisStreamsConsumer {
         &self,
     ) -> Option<RedisError> {
         let mut ids_to_claim: Vec<String> = Vec::new();
-        let pending_messages: RedisResult<StreamPendingCountReply> = self.client.get_conn().await
-            .xpending_count(
-                self.stream_name.clone(),
-                self.group_name.clone(),
-                "-",
-                "+",
-                self.count.clone(),
-            );
-        if pending_messages.is_ok() {
-            let pending_ids: Vec<StreamPendingId> = pending_messages.unwrap().ids;
-            for ids in pending_ids.iter() {
-                ids_to_claim.push(ids.id.clone());
-            };
-        } else {
-            error!("Error reading pending stream messages from stream {} for consumer {} in consumer group {}",
-                self.stream_name.clone(),
-                self.consumer_name.clone(),
-                self.group_name.clone(),
-            );
-            return Some(pending_messages.unwrap_err());
+
+        let pending_messages: StreamPendingCountReply = match self.client.get_conn().await
+        .xpending_count(
+            self.stream_name.clone(),
+            self.group_name.clone(),
+            "-",
+            "+",
+            self.count.clone(),
+        ) {
+            Ok(count_reply) => count_reply,
+            Err(error) => return Some(error),
         };
+        for ids in pending_messages.ids.iter() {
+            ids_to_claim.push(ids.id.clone());
+        }
 
         debug!("Total {} pending messages to be claimed", {ids_to_claim.len().to_string()});
         if ids_to_claim.len() > 0 {
-            let xclaim_opts: StreamClaimOptions = StreamClaimOptions::default();
-            let claimed_messages: RedisResult<StreamClaimReply> = self.client.get_conn().await
+            let _: StreamClaimReply = match self.client.get_conn().await
                 .xclaim_options(
                     self.stream_name.clone(),
                     self.group_name.clone(),
                     self.consumer_name.clone(),
                     self.min_idle_time_milliseconds.clone(),
                     &ids_to_claim,
-                    xclaim_opts,
-                );
-            if claimed_messages.is_err() {
-                error!("Error claiming pending stream messages from stream {} for consumer {} in consumer group {}",
-                    self.stream_name.clone(),
-                    self.consumer_name.clone(),
-                    self.group_name.clone(),
-                );
-                return Some(claimed_messages.unwrap_err())
+                    StreamClaimOptions::default(),
+                ) {
+                    Ok(result) => result,
+                    Err(error) => {
+                        error!("Error claiming pending stream messages from stream {} for consumer {} in consumer group {}",
+                            self.stream_name.clone(),
+                            self.consumer_name.clone(),
+                            self.group_name.clone(),
+                        );
+                        return Some(error);
+                    },
+                };
         };
-        }
 
         None
-
     }
 
     async fn xread_group(
         &self,
     ) -> Result<Vec<StreamId>, RedisError> {
-        let mut messages: Vec<StreamId> = Vec::new();
+        let mut ids: Vec<StreamId> = Vec::new();
 
-        let xread_opts: &StreamReadOptions = &StreamReadOptions::default()
+        let stream_read_reply: StreamReadReply = self.client.get_conn().await
+            .xread_options(
+                &[self.stream_name.clone(), self.stream_name.clone()],
+                &[self.latest_id.clone(), ">".to_string()],
+                &StreamReadOptions::default()
             .group(self.group_name.clone(), self.consumer_name.clone())
-            .block(self.block.clone().into());
-
-        let pending_messages_result: RedisResult<StreamReadReply> = self.client.get_conn().await
-            .xread_options(
-                &[self.stream_name.clone()],
-                &[self.latest_id.clone()],
-                xread_opts,
-            );
-        if pending_messages_result.is_ok() {
-            let messages_keys: Vec<StreamKey> = pending_messages_result.unwrap().keys;
-            for stream_key in messages_keys.iter() {
-                if stream_key.key == self.stream_name.clone() {
-                    for id in stream_key.ids.iter() {
-                        messages.push(id.clone());
-                    }
-                };
-            };
-        } else {
-            error!("Error reading pending messages");
-            return Err(pending_messages_result.unwrap_err());
+            .block(self.block.clone().into()),
+            )?;
+        for key in stream_read_reply.keys.iter() {
+            let key_ids = key.ids.clone();
+            ids.extend(key_ids);
         };
 
-        let new_messages: RedisResult<StreamReadReply> = self.client.get_conn().await
-            .xread_options(
-                &[self.stream_name.clone()],
-                &[">"],
-                xread_opts,
-            );
-        if new_messages.is_ok() {
-            let messages_keys: Vec<StreamKey> = new_messages.unwrap().keys;
-            for stream_key in messages_keys.iter() {
-                if stream_key.key == self.stream_name.clone() {
-                    for id in stream_key.ids.iter() {
-                        messages.push(id.clone());
-                    }
-                };
-            };
-        } else {
-            error!("Error reading new stream messages");
-            return Err(new_messages.unwrap_err());
-        };
-
-        debug!("Total {} messages readed", messages.len());
-        return Ok(messages);
-
+        debug!("Total {} messages readed", ids.len());
+        Ok(ids)
     }
 
     /// # Consume Pending Messages From Redis Stream
@@ -447,16 +407,16 @@ impl RedisStreamsConsumer {
         &self,
         id: String,
     ) -> RedisConsumerResult<RV> {
-        let acknowledge_result: RedisResult<RV> = self.client.get_conn().await
+        let result: RV = match self.client.get_conn().await
             .xack(
                 self.stream_name.clone(),
                 self.group_name.clone(),
                 &[id.as_str()],
-            );
-        if acknowledge_result.is_err() {
-            return Err(acknowledge_result.unwrap_err());
-        }
-
-        return Ok(acknowledge_result.unwrap());
+            ) {
+                Ok(result) => result,
+                Err(error) => return Err(error),
+            };
+        
+        Ok(result)
     }
 }

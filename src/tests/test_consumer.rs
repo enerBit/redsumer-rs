@@ -13,7 +13,7 @@ mod tests {
             .init();
 
         let url: String = String::from("localhost:6379");
-        let stream_name: String = String::from("test-redsumer-rs2");
+        let stream_name: String = String::from("test-redsumer-rs");
         let group_name: String = String::from("test-group-name");
         let consumer_name: String = String::from("redsumer-rs-consumer");
 
