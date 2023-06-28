@@ -1,5 +1,6 @@
 use redis::{Client, Connection};
 
+#[derive(Clone)]
 pub struct RedisClient {
     url: String,
     db: String,
