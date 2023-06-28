@@ -24,7 +24,7 @@ mod tests {
             group_name,
             consumer_name,
             None,
-            Some(2000u16),
+            None,
             None,
             None,
             None,

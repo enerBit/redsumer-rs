@@ -15,6 +15,7 @@ use crate::streams::client::RedisClient;
 pub type StreamMessage = StreamId;
 pub type RedisConsumerResult<T> = RedisResult<T>;
 
+#[derive(Clone)]
 pub struct RedisStreamsConsumer {
     client: RedisClient,
     stream_name: String,
@@ -343,19 +344,17 @@ impl RedisStreamsConsumer {
         self.stream_ready = true;
         debug!("Stream {} ready: {}", self.stream_name, self.stream_ready);
 
-        let err: Option<RedisError> = self.autoclaim().await;
-        if err.is_some() {
-            error!("Error autoclaiming pending messages");
-            return Err(err.unwrap());
+        match self.autoclaim().await {
+            Some(error) => {
+                error!("Error autoclaiming pending messages");
+                return Err(error);
+            },
+            None => debug!("messages autoclaimed successfully"),
         };
 
-       let messages: Result<Vec<StreamId>, RedisError> = self.xread_group().await;
-        if messages.is_err() {
-            log::error!("Error reading stream messages");
-            return Err(messages.unwrap_err());
-        }
+       let messages: Vec<StreamId> = self.xread_group().await?;
 
-        return Ok(messages.unwrap());
+        return Ok(messages);
     }
 
     /// # Acknowledge Stream Message By Id
