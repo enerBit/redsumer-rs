@@ -22,6 +22,7 @@
 //!
 
 mod redsumer;
+mod tests;
 
 pub use redis::{streams::StreamId, FromRedisValue, RedisError, ToRedisArgs};
 

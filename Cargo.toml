@@ -20,5 +20,10 @@ authors = [
 
 [dependencies]
 redis = { version = "0.23.2", features = ["tokio-comp"] }
-tokio = { version = "1.31.0", features = ["full"] }
+tokio = { version = "1.32.0", features = ["full"] }
 log = { version = "0.4.20" }
+
+[dev-dependencies]
+structmap = { version = "0.1.6" }
+structmap-derive = { version = "0.1.6" }
+uuid ={ version = "*", features = ["v4"] }
