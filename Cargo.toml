@@ -1,14 +1,29 @@
 [package]
 name = "redsumer-rs"
-version = "0.2.2"
+description = "Lightweight implementation of Redis Streams for Rust"
+version = "0.3.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license-file = "LICENSE"
+readme = "README.md"
+keywords = [
+    "redis",
+    "redis streams",
+]
+repository = "https://github.com/enerBit/redsumer-rs"
+categories = [
+    "database-implementations",
+]
+authors = [
+    "enerBit",
+    "Juan Manuel Tamayo <jmtamayog23@gmail.com>",
+]
 
 [dependencies]
-chrono = "0.4.26"
-env_logger = "0.10.0"
-log = "0.4.19"
-redis = { version = "0.23.0", features = ["tokio-comp"] }
-tokio = { version = "1.28.2", features = ["full"] }
-uuid = { version = "1.3.4", features = ["v4"] }
+redis = { version = "0.23.2", features = ["tokio-comp"] }
+tokio = { version = "1.32.0", features = ["full"] }
+log = { version = "0.4.20" }
+
+[dev-dependencies]
+structmap = { version = "0.1.6" }
+structmap-derive = { version = "0.1.6" }
+uuid ={ version = "*", features = ["v4"] }
