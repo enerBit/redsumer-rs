@@ -33,11 +33,11 @@ impl<'p> RedsumerProducer<'p> {
     }
 
     /// Produce **stream event** from **vector of items**
-    pub async fn produce_from_items<F: ToRedisArgs, V: ToRedisArgs>(
+    pub async fn produce_from_items<F: ToRedisArgs, V: ToRedisArgs, RV: FromRedisValue>(
         &self,
         items: &Vec<(F, V)>,
-    ) -> Result<String, RedisError> {
-        let id: String =
+    ) -> Result<RV, RedisError> {
+        let id: RV =
             self.get_client()
                 .get_connection()
                 .await?
@@ -47,9 +47,9 @@ impl<'p> RedsumerProducer<'p> {
     }
 
     /// Produce **stream event** from **map**
-    pub async fn produce_from_map<BTM: ToRedisArgs, RV: FromRedisValue>(
+    pub async fn produce_from_map<M: ToRedisArgs, RV: FromRedisValue>(
         &self,
-        map: BTM,
+        map: M,
     ) -> Result<RV, RedisError> {
         let id: RV =
             self.get_client()
