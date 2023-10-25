@@ -1,13 +1,13 @@
 [package]
 name = "redsumer-rs"
 description = "Lightweight implementation of Redis Streams for Rust"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 license-file = "LICENSE"
 readme = "README.md"
 keywords = [
     "redis",
-    "redis streams",
+    "redis_streams",
 ]
 repository = "https://github.com/enerBit/redsumer-rs"
 categories = [
@@ -19,11 +19,12 @@ authors = [
 ]
 
 [dependencies]
-redis = { version = "0.23.2", features = ["tokio-comp"] }
-tokio = { version = "1.32.0", features = ["full"] }
+redis = { version = "0.23.3", features = ["tokio-comp", "streams"] }
+tokio = { version = "1.33.0", features = ["full"] }
 log = { version = "0.4.20" }
+async-trait = { version = "0.1.74" }
 
 [dev-dependencies]
 structmap = { version = "0.1.6" }
 structmap-derive = { version = "0.1.6" }
-uuid ={ version = "*", features = ["v4"] }
+uuid ={ version = "1.5.0", features = ["v4"] }
