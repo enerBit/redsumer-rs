@@ -228,7 +228,7 @@ impl<'c> RedsumerConsumer<'c> {
                 self.get_consumer_name(),
                 self.get_consumer_options().get_min_idle_time_milliseconds(),
                 &ids_to_claim,
-                StreamClaimOptions::default().with_justid(),
+                StreamClaimOptions::default(),
             )?;
 
             debug!(
@@ -248,13 +248,15 @@ impl<'c> RedsumerConsumer<'c> {
     async fn xread_group(&self) -> Result<Vec<StreamId>, RedisError> {
         let mut ids: Vec<StreamId> = Vec::new();
 
+        let count: u16 = self.get_consumer_options().get_count();
+
         let pending_messages: StreamReadReply =
             self.get_client().get_connection().await?.xread_options(
                 &[self.get_stream_name()],
                 &[self.get_consumer_options().get_latest_id()],
                 &StreamReadOptions::default()
                     .group(self.get_group_name(), self.get_consumer_name())
-                    .count(self.get_consumer_options().get_count().into()),
+                    .count(count.into()),
             )?;
 
         for key in pending_messages.keys.iter() {
@@ -262,8 +264,9 @@ impl<'c> RedsumerConsumer<'c> {
             ids.extend(key_ids);
         }
 
-        let total_new_messages_to_read: usize =
-            self.get_consumer_options().get_count() as usize - ids.len();
+        let total_pending_messages_read = ids.len();
+        let total_new_messages_to_read: usize = count as usize - total_pending_messages_read;
+
         if total_new_messages_to_read.gt(&0) {
             let new_messages: StreamReadReply =
                 self.get_client().get_connection().await?.xread_options(
@@ -281,7 +284,12 @@ impl<'c> RedsumerConsumer<'c> {
             }
         };
 
-        debug!("Total {} messages read from stream", ids.len());
+        debug!(
+            "Total {} messages read from stream: {} pending messages and {} new messages",
+            ids.len(),
+            total_pending_messages_read,
+            ids.len() - total_pending_messages_read,
+        );
 
         Ok(ids)
     }
