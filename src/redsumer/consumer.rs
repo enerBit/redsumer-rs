@@ -229,7 +229,7 @@ impl<'c> RedsumerConsumer<'c> {
                     self.get_consumer_name(),
                     self.get_consumer_options().get_min_idle_time_milliseconds(),
                     &ids_to_claim,
-                    StreamClaimOptions::default().with_justid(),
+                    StreamClaimOptions::default(),
                 )?;
 
             debug!(
