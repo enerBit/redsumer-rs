@@ -5,8 +5,8 @@ use tokio::time::{sleep, Duration};
 use redis::streams::StreamInfoConsumersReply;
 use redis::{
     streams::{
-        StreamClaimOptions, StreamId, StreamInfoGroupsReply, StreamInfoStreamReply,
-        StreamPendingCountReply, StreamReadOptions, StreamReadReply,
+        StreamClaimOptions, StreamClaimReply, StreamId, StreamInfoGroupsReply,
+        StreamInfoStreamReply, StreamPendingCountReply, StreamReadOptions, StreamReadReply,
     },
     Commands, ErrorKind, FromRedisValue, RedisError, RedisResult, ToRedisArgs,
 };
@@ -222,18 +222,19 @@ impl<'c> RedsumerConsumer<'c> {
         }
 
         if ids_to_claim.len() > 0 {
-            self.get_client().get_connection().await?.xclaim_options(
-                self.get_stream_name(),
-                self.get_group_name(),
-                self.get_consumer_name(),
-                self.get_consumer_options().get_min_idle_time_milliseconds(),
-                &ids_to_claim,
-                StreamClaimOptions::default(),
-            )?;
+            let claimed_messages: StreamClaimReply =
+                self.get_client().get_connection().await?.xclaim_options(
+                    self.get_stream_name(),
+                    self.get_group_name(),
+                    self.get_consumer_name(),
+                    self.get_consumer_options().get_min_idle_time_milliseconds(),
+                    &ids_to_claim,
+                    StreamClaimOptions::default().with_justid(),
+                )?;
 
             debug!(
                 "Total {} pending messages successfully claimed",
-                ids_to_claim.len()
+                &claimed_messages.ids.len(),
             );
         }
 
