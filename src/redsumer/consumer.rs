@@ -231,11 +231,6 @@ impl<'c> RedsumerConsumer<'c> {
                     &ids_to_claim,
                     StreamClaimOptions::default(),
                 )?;
-
-            debug!(
-                "Total {} pending messages successfully claimed",
-                &claimed_messages.ids.len(),
-            );
         }
 
         Ok(())
