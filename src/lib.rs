@@ -30,7 +30,7 @@ pub mod streams {
         StreamId, StreamInfoConsumer, StreamInfoConsumersReply, StreamInfoGroup,
         StreamInfoGroupsReply, StreamInfoStreamReply,
     };
-    pub use redis::{FromRedisValue, RedisError, ToRedisArgs};
+    pub use redis::{from_redis_value, FromRedisValue, RedisError, ToRedisArgs, Value};
 
     pub mod info {
         // Utilities to get stream, group and consumers information.
