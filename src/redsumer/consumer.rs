@@ -206,9 +206,7 @@ impl<'c> RedsumerConsumer<'c> {
     /// 1. First step: To get pending messages by `stream name` and `group name`. Consumer reads maximum `count` messages from `latest id` to newest id delivered to any consumer in consumers group.
     /// 2. Second step: To claim ownership of pending messages from first step result by `stream name`, `group name` and `consumer name`. The consumer claims pending messages when `min idle time milliseconds` is exceeded.
     async fn autoclaim(&self) -> Result<(), RedisError> {
-        let mut ids_to_claim: Vec<String> = Vec::new();
-
-        let pending_messages: StreamPendingCountReply =
+        let pending_messages_to_claim: StreamPendingCountReply =
             self.get_client().get_connection().await?.xpending_count(
                 self.get_stream_name(),
                 self.get_group_name(),
@@ -217,12 +215,14 @@ impl<'c> RedsumerConsumer<'c> {
                 self.get_consumer_options().get_count(),
             )?;
 
-        for ids in pending_messages.ids.iter() {
-            ids_to_claim.push(ids.id.to_owned());
-        }
+        let ids_to_claim: Vec<String> = pending_messages_to_claim
+            .ids
+            .iter()
+            .map(|stream_pending_id| stream_pending_id.id.to_owned())
+            .collect::<Vec<String>>();
 
         if ids_to_claim.len() > 0 {
-            let claimed_messages: StreamClaimReply =
+            let _claimed_messages: StreamClaimReply =
                 self.get_client().get_connection().await?.xclaim_options(
                     self.get_stream_name(),
                     self.get_group_name(),
@@ -246,7 +246,7 @@ impl<'c> RedsumerConsumer<'c> {
 
         let count: u16 = self.get_consumer_options().get_count();
 
-        let pending_messages: StreamReadReply =
+        let pending_messages_reply: StreamReadReply =
             self.get_client().get_connection().await?.xread_options(
                 &[self.get_stream_name()],
                 &[self.get_consumer_options().get_latest_id()],
@@ -255,7 +255,7 @@ impl<'c> RedsumerConsumer<'c> {
                     .count(count.into()),
             )?;
 
-        for key in pending_messages.keys.iter() {
+        for key in pending_messages_reply.keys.iter() {
             let key_ids = key.ids.to_owned();
             ids.extend(key_ids);
         }
