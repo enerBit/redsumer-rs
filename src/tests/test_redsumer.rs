@@ -81,47 +81,11 @@ pub mod test_streams {
 
     #[tokio::test]
     async fn test_produce_from_object() {
-        use std::env;
         use structmap::ToMap;
         use structmap_derive::ToMap;
 
-        let redis_user: String = match env::var("REDIS_USER") {
-            Ok(env_var) => env_var,
-            Err(error) => panic!("{}", error),
-        };
-
-        let redis_password: String = match env::var("REDIS_PASSWORD") {
-            Ok(env_var) => env_var,
-            Err(error) => panic!("{}", error),
-        };
-
-        let redis_host: String = match env::var("REDIS_HOST") {
-            Ok(env_var) => env_var,
-            Err(error) => panic!("{}", error),
-        };
-
-        let redis_port: String = match env::var("REDIS_PORT") {
-            Ok(env_var) => env_var,
-            Err(error) => panic!("{}", error),
-        };
-
-        let redis_db: String = match env::var("REDIS_DB") {
-            Ok(env_var) => env_var,
-            Err(error) => panic!("{}", error),
-        };
-
-        let redis_stream_name: String = match env::var("REDIS_STREAM_NAME") {
-            Ok(env_var) => env_var,
-            Err(error) => panic!("{}", error),
-        };
-
-        let producer: RedsumerProducer<'_> = RedsumerProducer::new(
-            Some(ClientCredentials::get(&redis_user, &redis_password)),
-            &redis_host,
-            &redis_port,
-            &redis_db,
-            &redis_stream_name,
-        );
+        let producer: RedsumerProducer<'_> =
+            RedsumerProducer::new(None, "localhost", "6379", "0", "test-produce-from-object");
 
         #[derive(ToMap, Default)]
         struct MyMessage {
@@ -153,7 +117,7 @@ pub mod test_streams {
         }
 
         let consumer_options: RedsumerConsumerOptions =
-            RedsumerConsumerOptions::default().set_count(500u16);
+            RedsumerConsumerOptions::new("0", 0, 10000, 500, 500, 1).unwrap();
 
         let mut consumer: RedsumerConsumer = RedsumerConsumer::new(
             None,
@@ -213,7 +177,7 @@ pub mod test_streams {
             stream_name,
             group_name,
             "alpha",
-            RedsumerConsumerOptions::default(),
+            RedsumerConsumerOptions::new("0", 0, 10000, 10, 10, 1).unwrap(),
         );
 
         let mut consumer_beta: RedsumerConsumer = RedsumerConsumer::new(
@@ -224,7 +188,7 @@ pub mod test_streams {
             stream_name,
             group_name,
             "beta",
-            RedsumerConsumerOptions::default().set_min_idle_time_milliseconds(1u32),
+            RedsumerConsumerOptions::new("0", 0, 1, 10, 10, 1).unwrap(),
         );
 
         let consumer_alpha_result: Result<Vec<StreamId>, RedisError> =
@@ -236,15 +200,13 @@ pub mod test_streams {
         assert!(consumer_beta_result.is_ok());
         let pending_messages_beta: Vec<StreamId> = consumer_beta_result.unwrap();
 
-        let beta_ownership_result = consumer_beta
-            .validate_pending_message_ownership(&pending_messages_beta[0].id)
-            .await;
+        let beta_ownership_result =
+            consumer_beta.validate_pending_message_ownership(&pending_messages_beta[0].id);
         assert!(beta_ownership_result.is_ok());
         assert!(beta_ownership_result.unwrap());
 
-        let alpha_ownership_result = consumer_alpha
-            .validate_pending_message_ownership(&pending_messages_alpha[0].id)
-            .await;
+        let alpha_ownership_result =
+            consumer_alpha.validate_pending_message_ownership(&pending_messages_alpha[0].id);
         assert!(&alpha_ownership_result.is_ok());
         assert!(!&alpha_ownership_result.unwrap());
 
@@ -254,9 +216,8 @@ pub mod test_streams {
         assert!(akc_result.is_ok());
         assert!(akc_result.unwrap());
 
-        let beta_ownership_result = consumer_beta
-            .validate_pending_message_ownership(&pending_messages_beta[0].id)
-            .await;
+        let beta_ownership_result =
+            consumer_beta.validate_pending_message_ownership(&pending_messages_beta[0].id);
         assert!(beta_ownership_result.is_err());
     }
 
@@ -287,9 +248,7 @@ pub mod test_streams {
             stream_name,
             group_name,
             "alpha",
-            RedsumerConsumerOptions::default()
-                .set_min_idle_time_milliseconds(1u32)
-                .set_count(200u16),
+            RedsumerConsumerOptions::new("0", 0, 1, 100, 100, 1).unwrap(),
         );
 
         let consumer_result: Result<Vec<StreamId>, RedisError> = consumer.consume().await;
@@ -336,7 +295,7 @@ pub mod test_streams {
             stream_name,
             group_name,
             "alpha",
-            RedsumerConsumerOptions::default(),
+            RedsumerConsumerOptions::new("0", 0, 1, 100, 100, 1).unwrap(),
         );
 
         let consumer_alpha_result: Result<Vec<StreamId>, RedisError> =
@@ -351,7 +310,7 @@ pub mod test_streams {
             stream_name,
             group_name,
             "beta",
-            RedsumerConsumerOptions::default().set_min_idle_time_milliseconds(60000u32),
+            RedsumerConsumerOptions::new("0", 0, 60000, 100, 100, 1).unwrap(),
         );
 
         let consumer_beta_result: Result<Vec<StreamId>, RedisError> = consumer_beta.consume().await;
@@ -365,7 +324,7 @@ pub mod test_streams {
             stream_name,
             group_name,
             "beta",
-            RedsumerConsumerOptions::default().set_min_idle_time_milliseconds(1u32),
+            RedsumerConsumerOptions::new("0", 0, 1, 100, 100, 1).unwrap(),
         );
 
         let consumer_beta_result: Result<Vec<StreamId>, RedisError> = consumer_beta.consume().await;
@@ -399,7 +358,7 @@ pub mod test_streams {
             stream_name,
             group_name,
             "alpha",
-            RedsumerConsumerOptions::default().set_block(10000u16),
+            RedsumerConsumerOptions::new("0", 0, 1, 100, 100, 10000).unwrap(),
         );
 
         let consumer_alpha_result: Result<Vec<StreamId>, RedisError> = consumer.consume().await;
