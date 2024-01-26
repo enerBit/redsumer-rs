@@ -61,7 +61,7 @@ impl<'c> RedsumerClient<'c> {
         )
     }
 
-    pub async fn get_connection(&self) -> Result<Connection, RedisError> {
+    pub fn get_connection(&self) -> Result<Connection, RedisError> {
         match Client::open(self.get_connection_string()) {
             Ok(client) => match client.get_connection() {
                 Ok(connection) => Ok(connection),

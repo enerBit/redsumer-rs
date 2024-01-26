@@ -41,11 +41,10 @@ impl<'p> RedsumerProducer<'p> {
         &self,
         items: &Vec<(F, V)>,
     ) -> Result<RV, RedisError> {
-        let id: RV =
-            self.get_client()
-                .get_connection()
-                .await?
-                .xadd(self.stream_name, "*", items)?;
+        let id: RV = self
+            .get_client()
+            .get_connection()?
+            .xadd(self.stream_name, "*", items)?;
 
         Ok(id)
     }
@@ -55,11 +54,10 @@ impl<'p> RedsumerProducer<'p> {
         &self,
         map: M,
     ) -> Result<RV, RedisError> {
-        let id: RV =
-            self.get_client()
-                .get_connection()
-                .await?
-                .xadd_map(self.stream_name, "*", map)?;
+        let id: RV = self
+            .get_client()
+            .get_connection()?
+            .xadd_map(self.stream_name, "*", map)?;
 
         Ok(id)
     }
@@ -70,8 +68,7 @@ impl<'p> StreamInfo for RedsumerProducer<'p> {
     async fn get_stream_info(&self) -> Result<StreamInfoStreamReply, RedisError> {
         let stream_info: StreamInfoStreamReply = self
             .get_client()
-            .get_connection()
-            .await?
+            .get_connection()?
             .xinfo_stream(self.get_stream_name())?;
 
         Ok(stream_info)
@@ -80,8 +77,7 @@ impl<'p> StreamInfo for RedsumerProducer<'p> {
     async fn get_consumer_groups_info(&self) -> Result<StreamInfoGroupsReply, RedisError> {
         let groups_info: StreamInfoGroupsReply = self
             .get_client()
-            .get_connection()
-            .await?
+            .get_connection()?
             .xinfo_groups(self.get_stream_name())?;
 
         Ok(groups_info)
