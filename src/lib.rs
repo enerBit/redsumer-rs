@@ -24,7 +24,7 @@
 mod redsumer;
 mod tests;
 
-/// Structs and traits from crate [redis](https://docs.rs/redis/0.23.3/redis) and its module [redis::streams](https://docs.rs/redis/0.23.3/redis/streams). Traits to get streams information.
+/// Structs and traits from crate [redis](https://docs.rs/redis/0.23.3/redis) and its module [redis::streams](https://docs.rs/redis/0.23.3/redis/streams). Traits to get streams information and utilities to unwrap Redis Values.
 pub mod streams {
     pub use redis::streams::{
         StreamId, StreamInfoConsumer, StreamInfoConsumersReply, StreamInfoGroup,
@@ -33,6 +33,8 @@ pub mod streams {
     pub use redis::{
         from_redis_value, ErrorKind, FromRedisValue, RedisError, RedisResult, ToRedisArgs, Value,
     };
+
+    pub use crate::redsumer::types::FromRedisValueImplHandler;
 
     pub mod info {
         // Utilities to get stream, group and consumers information.
