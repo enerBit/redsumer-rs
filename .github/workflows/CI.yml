@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Redis streams service
+        uses: supercharge/redis-github-action@1.7.0
+        with:
+          redis-port: 6379
+
+      - name: Git checkout
+        uses: actions/checkout@v3
+          
+      - name: Build proyect
+        run: cargo build --verbose
+        
+      - name: Run proyect tests
+        run: cargo test --verbose
+  
