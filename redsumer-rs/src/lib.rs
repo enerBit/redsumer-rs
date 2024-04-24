@@ -9,7 +9,7 @@
 //!
 //! Create a new producer instance:
 //!
-//! ```rust
+//! ```rust,no_run
 //! use std::collections::HashMap;
 //! use redsumer::{RedsumerProducer, RedsumerResult, Id};
 //!
@@ -27,7 +27,7 @@
 //!
 //! Create a new consumer instance:
 //!
-//! ```rust
+//! ```rust,no_run
 //! use redsumer::{RedsumerConsumer, RedsumerResult};
 //! use redsumer::redis::StreamId;
 //!
