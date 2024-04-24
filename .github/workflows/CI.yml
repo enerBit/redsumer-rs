@@ -22,9 +22,8 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
           
-      - name: Build proyect
+      - name: Build project
         run: cargo build --verbose
         
-      - name: Run proyect tests
+      - name: Run project tests
         run: cargo test --verbose
-  
