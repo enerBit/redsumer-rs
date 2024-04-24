@@ -1,0 +1,35 @@
+[package]
+name = "redsumer"
+description = "Lightweight implementation of Redis Streams for Rust"
+version = "0.4.0-beta.1"
+edition = "2021"
+license-file = "LICENSE"
+readme = "README.md"
+keywords = [
+    "redis",
+    "redis_streams",
+]
+homepage = "https://github.com/enerBit/redsumer-rs/redsumer-rs"
+repository = "https://github.com/enerBit/redsumer-rs/redsumer-rs"
+documentation = "https://docs.rs/redsumer"
+categories = [
+    "database-implementations",
+]
+authors = [
+    "enerBit",
+    "Juan Manuel Tamayo <jmtamayog23@gmail.com>",
+]
+
+[dependencies]
+redis = { version = "0.25.3", features = ["tokio-comp", "streams"] }
+tokio = { version = "1.37.0", features = ["full"] }
+uuid = { version = "1.8.0" }
+time = { version = "0.3.36", features = ["parsing"] }
+bytes = { version = "1.6.0" }
+serde = { version = "1.0.198", features = ["derive"] }
+serde_json = { version = "1.0.116" }
+log = { version = "0.4.21" }
+
+[dev-dependencies]
+structmap = { version = "0.1.6" }
+structmap-derive = { version = "0.1.6" }
