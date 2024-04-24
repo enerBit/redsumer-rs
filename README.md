@@ -14,8 +14,7 @@ For more dependency options from git, check section [3.0 Cargo Reference](https:
 Create a new producer instance:
 
 ```rust,no_run
-    use std::collections::HashMap;
-    use redsumer_rs::*;
+    use redsumer::*;
     
     let credentials: Option<ClientCredentials> = None;
     let host: &str = "localhost";
