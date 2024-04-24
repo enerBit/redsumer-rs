@@ -11,9 +11,9 @@ For more dependency options from git, check section [3.0 Cargo Reference](https:
 
 ### Producer:
 
-Create a message producer and send an event:
+Create a new producer instance:
 
-```rust
+```rust,no_run
     use std::collections::HashMap;
     use redsumer_rs::{RedsumerProducer, RedsumerResult, Id};
 
@@ -27,21 +27,13 @@ Create a message producer and send an event:
         );
 
     let producer: RedsumerProducer = producer_result.unwrap();
-
-    let message: HashMap<String, String> = [("key".to_string(), "value".to_string())]
-        .iter()
-        .cloned()
-        .collect();
-
-    let msg_result: RedsumerResult<Id> = producer.produce(message).await;
-    let id: Id = msg_result.unwrap();
 ```
 
 ### Consumer:
 
-Create a stream consumer and consume messages:
+Create a new consumer instance:
 
-```rust
+```rust,no_run
     use redsumer::{RedsumerConsumer, RedsumerResult};
     use redsumer::redis::StreamId;
 
@@ -62,9 +54,6 @@ Create a stream consumer and consume messages:
     );
 
     let mut consumer: RedsumerConsumer = consumer_result.unwrap();
-
-    let messages_result: RedsumerResult<Vec<StreamId>> = consumer.consume().await;
-    let messages: Vec<StreamId> = messages_result.unwrap();
 ```
 
 ## Contributing

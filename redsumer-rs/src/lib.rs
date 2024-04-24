@@ -7,7 +7,7 @@
 //!
 //! ## Basic Usage
 //!
-//! Create a message producer and send an event:
+//! Create a new producer instance:
 //!
 //! ```rust
 //! use std::collections::HashMap;
@@ -23,17 +23,9 @@
 //!     );
 //!
 //! let producer: RedsumerProducer = producer_result.unwrap();
-//!
-//! let message: HashMap<String, String> = [("key".to_string(), "value".to_string())]
-//!     .iter()
-//!     .cloned()
-//!     .collect();
-//!
-//! let msg_result: RedsumerResult<Id> = producer.produce(message).await;
-//! let id: Id = msg_result.unwrap();
 //! ```
 //!
-//! Create a stream consumer and consume messages:
+//! Create a new consumer instance:
 //!
 //! ```rust
 //! use redsumer::{RedsumerConsumer, RedsumerResult};
@@ -55,9 +47,7 @@
 //!     5,
 //! );
 //!
-//! let mut consumer: RedsumerConsumer = consumer_result.unwrap();//!
-//! let messages_result: RedsumerResult<Vec<StreamId>> = consumer.consume().await;
-//! let messages: Vec<StreamId> = messages_result.unwrap();
+//! let mut consumer: RedsumerConsumer = consumer_result.unwrap();
 //! ```
 //!
 //! ## Contributing
