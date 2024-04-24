@@ -1,20 +1,67 @@
 # redsumer-rs
 
 A **lightweight implementation** of **Redis Streams** for Rust, that allows you managing streaming messages in an easy way.
-With redsumer-rs you can:
-- **Produce** stream messages in specific *database* and *stream name*.
-- **Consume** stream messages from specific *stream name* and *consumer group*, setting config parameters like *min idle time*, *fisrt id*, *max number of messages to consume* and more. Also you can set message as consumed for specific *consumer group*.
-To use redsumer-rs from github repository, set the dependency in Cargo.toml file as follows:
-
-```ini
-[dependencies]
-redsumer-rs = {git = "https://github.com/enerBit/redsumer-rs"}
-```
-
-If you need to use an specific version, set the dependency in Cargo.toml file as follows:
- ```ini
-[dependencies]
-redsumer-rs = {git = "https://github.com/enerBit/redsumer-rs", version = "0.2.2"}
-```
+With `redsumer-rs` you can:
+- **Produce** new messages in a specific *stream*.
+- **Consume** messages from specific *stream*, setting config parameters that allow you a flexible implementation.
 
 For more dependency options from git, check section [3.0 Cargo Reference](https://doc.rust-lang.org/cargo/reference/index.html) from `The Cargo Book`.
+
+## Basic Usage
+
+### Producer:
+
+Create a new producer instance:
+
+```rust,no_run
+    use std::collections::HashMap;
+    use redsumer_rs::{RedsumerProducer, RedsumerResult, Id};
+
+    let producer_result: RedsumerResult<RedsumerProducer> =
+        RedsumerProducer::new(
+            None,
+            "localhost",
+            "6379",
+            "0",
+            "my-stream"
+        );
+
+    let producer: RedsumerProducer = producer_result.unwrap();
+```
+
+### Consumer:
+
+Create a new consumer instance:
+
+```rust,no_run
+    use redsumer::{RedsumerConsumer, RedsumerResult};
+    use redsumer::redis::StreamId;
+
+    let consumer_result: RedsumerResult<RedsumerConsumer> = RedsumerConsumer::new(
+        None,
+        "localhost",
+        "6379",
+        "0",
+        "my-stream",
+        "group-name",
+        "consumer",
+        "0-0",
+        1000,
+        10,
+        10,
+        30,
+        5,
+    );
+
+    let mut consumer: RedsumerConsumer = consumer_result.unwrap();
+```
+
+## Contributing
+
+We welcome contributions to `redsumer-rs`. Here are some ways you can contribute:
+
+- **Bug Reports**: If you find a bug, please create an issue detailing the problem, the steps to reproduce it, and the expected behavior.
+- **Feature Requests**: If you have an idea for a new feature or an enhancement to an existing one, please create an issue describing your idea.
+- **Pull Requests**: If you've fixed a bug or implemented a new feature, we'd love to see your work! Please submit a pull request. Make sure your code follows the existing style and all tests pass.
+
+Thank you for your interest in improving `redsumer-rs`!
