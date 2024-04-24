@@ -10,24 +10,24 @@
 //! Create a new producer instance:
 //!
 //! ```rust,no_run
-//!     use redsumer_rs::*;
+//! use redsumer::*;
 //!     
-//!     let credentials: Option<ClientCredentials> = None;
-//!     let host: &str = "localhost";
-//!     let port: &str = "6379";
-//!     let db: &str = "0";
-//!     let stream_name: &str = "my-stream";
+//! let credentials: Option<ClientCredentials> = None;
+//! let host: &str = "localhost";
+//! let port: &str = "6379";
+//! let db: &str = "0";
+//! let stream_name: &str = "my-stream";
 //! 
-//!     let producer_result: RedsumerResult<RedsumerProducer> =
-//!         RedsumerProducer::new(
-//!             credentials,
-//!             host,
-//!             port,
-//!             db,
-//!             stream_name,
-//!         );
-//! 
-//!     let producer: RedsumerProducer = producer_result.unwrap();
+//! let producer_result: RedsumerResult<RedsumerProducer> =
+//!     RedsumerProducer::new(
+//!     credentials,
+//!     host,
+//!     port,
+//!     db,
+//!     stream_name,
+//! );
+//!
+//! let producer: RedsumerProducer = producer_result.unwrap();
 //! ```
 //!
 //! Create a new consumer instance:
