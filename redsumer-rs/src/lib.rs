@@ -10,43 +10,61 @@
 //! Create a new producer instance:
 //!
 //! ```rust,no_run
-//! use std::collections::HashMap;
-//! use redsumer::{RedsumerProducer, RedsumerResult, Id};
-//!
-//! let producer_result: RedsumerResult<RedsumerProducer> =
-//!     RedsumerProducer::new(
-//!         None,
-//!         "localhost",
-//!         "6379",
-//!         "0",
-//!         "my-stream",
-//!     );
-//!
-//! let producer: RedsumerProducer = producer_result.unwrap();
+//!     use redsumer_rs::*;
+//!     
+//!     let credentials: Option<ClientCredentials> = None;
+//!     let host: &str = "localhost";
+//!     let port: &str = "6379";
+//!     let db: &str = "0";
+//!     let stream_name: &str = "my-stream";
+//! 
+//!     let producer_result: RedsumerResult<RedsumerProducer> =
+//!         RedsumerProducer::new(
+//!             credentials,
+//!             host,
+//!             port,
+//!             db,
+//!             stream_name,
+//!         );
+//! 
+//!     let producer: RedsumerProducer = producer_result.unwrap();
 //! ```
 //!
 //! Create a new consumer instance:
 //!
 //! ```rust,no_run
-//! use redsumer::{RedsumerConsumer, RedsumerResult};
-//! use redsumer::redis::StreamId;
-//!
+//! use redsumer::*;
+//! 
+//! let credentials: Option<ClientCredentials> = None;
+//! let host: &str = "localhost";
+//! let port: &str = "6379";
+//! let db: &str = "0";
+//! let stream_name: &str = "my-stream";
+//! let group_name: &str = "group-name";
+//! let consumer_name: &str = "consumer";
+//! let since_id: &str = "0-0";
+//! let min_idle_time_milliseconds: usize = 1000;
+//! let new_messages_count: usize = 3;
+//! let pending_messages_count: usize = 2;
+//! let claimed_messages_count: usize = 1;
+//! let block: u8 = 5;
+//! 
 //! let consumer_result: RedsumerResult<RedsumerConsumer> = RedsumerConsumer::new(
-//!     None,
-//!     "localhost",
-//!     "6379",
-//!     "0",
-//!     "my-stream",
-//!     "group-name",
-//!     "consumer",
-//!     "0-0",
-//!     1000,
-//!     10,
-//!     10,
-//!     30,
-//!     5,
+//!     credentials,
+//!     host,
+//!     port,
+//!     db,
+//!     stream_name,
+//!     group_name,
+//!     consumer_name,
+//!     since_id,
+//!     min_idle_time_milliseconds,
+//!     new_messages_count,
+//!     pending_messages_count,
+//!     claimed_messages_count,
+//!     block,
 //! );
-//!
+//! 
 //! let mut consumer: RedsumerConsumer = consumer_result.unwrap();
 //! ```
 //!
