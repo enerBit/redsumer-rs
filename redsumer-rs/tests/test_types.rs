@@ -1,13 +1,13 @@
 #[cfg(test)]
 pub mod test_from_redis_value_extended_methods {
-    use redis::Value;
-    use serde::{Deserialize, Serialize};
+    use redsumer::redis::Value;
+    use redsumer::FromRedisValueHandler;
 
-    use crate::redsumer::types::FromRedisValueImplHandler;
+    use serde::{Deserialize, Serialize};
 
     #[test]
     fn test_numerics_from_redis_value() {
-        let from_redis_value_handler: FromRedisValueImplHandler = FromRedisValueImplHandler::new();
+        let from_redis_value_handler: FromRedisValueHandler = FromRedisValueHandler::new();
 
         // Tests for: isize
         assert!(from_redis_value_handler
@@ -277,8 +277,23 @@ pub mod test_from_redis_value_extended_methods {
     }
 
     #[test]
+    fn test_get_string_from_redis_value() {
+        let from_redis_value_handler: FromRedisValueHandler = FromRedisValueHandler::new();
+
+        assert!(from_redis_value_handler
+            .to_optional_string(&(Value::Data(String::from("hello-rusty").into_bytes())))
+            .unwrap()
+            .is_some());
+
+        assert!(from_redis_value_handler
+            .to_optional_string(&(Value::Nil))
+            .unwrap()
+            .is_none());
+    }
+
+    #[test]
     fn test_bool_from_redis_value() {
-        let from_redis_value_handler: FromRedisValueImplHandler = FromRedisValueImplHandler::new();
+        let from_redis_value_handler: FromRedisValueHandler = FromRedisValueHandler::new();
 
         assert!(from_redis_value_handler
             .to_bool(&(Value::Data(String::from("1").into_bytes())))
@@ -305,7 +320,7 @@ pub mod test_from_redis_value_extended_methods {
 
     #[test]
     fn test_uuid_from_redis_value() {
-        let from_redis_value_handler: FromRedisValueImplHandler = FromRedisValueImplHandler::new();
+        let from_redis_value_handler: FromRedisValueHandler = FromRedisValueHandler::new();
 
         assert!(from_redis_value_handler
             .to_uuid(
@@ -336,7 +351,7 @@ pub mod test_from_redis_value_extended_methods {
 
     #[test]
     fn test_get_offsetdatetime_from_redis_value_in_format_iso8601() {
-        let from_redis_value_handler: FromRedisValueImplHandler = FromRedisValueImplHandler::new();
+        let from_redis_value_handler: FromRedisValueHandler = FromRedisValueHandler::new();
 
         assert!(from_redis_value_handler
             .to_offsetdatetime_from_iso8601(
@@ -365,7 +380,7 @@ pub mod test_from_redis_value_extended_methods {
 
     #[test]
     fn test_get_offsetdatetime_from_redis_value_in_format_rfc2822() {
-        let from_redis_value_handler: FromRedisValueImplHandler = FromRedisValueImplHandler::new();
+        let from_redis_value_handler: FromRedisValueHandler = FromRedisValueHandler::new();
 
         assert!(from_redis_value_handler
             .to_offsetdatetime_from_rfc2822(
@@ -394,7 +409,7 @@ pub mod test_from_redis_value_extended_methods {
 
     #[test]
     fn test_get_offsetdatetime_from_redis_value_in_format_rfc3339() {
-        let from_redis_value_handler: FromRedisValueImplHandler = FromRedisValueImplHandler::new();
+        let from_redis_value_handler: FromRedisValueHandler = FromRedisValueHandler::new();
 
         assert!(from_redis_value_handler
             .to_offsetdatetime_from_rfc3339(&Value::Data(
@@ -423,7 +438,7 @@ pub mod test_from_redis_value_extended_methods {
 
     #[test]
     fn test_get_date_from_redis_value_in_format_iso8601() {
-        let from_redis_value_handler: FromRedisValueImplHandler = FromRedisValueImplHandler::new();
+        let from_redis_value_handler: FromRedisValueHandler = FromRedisValueHandler::new();
 
         assert!(from_redis_value_handler
             .to_date_from_iso8601(&Value::Data(String::from("2024-01-16").into_bytes()))
@@ -446,7 +461,7 @@ pub mod test_from_redis_value_extended_methods {
 
     #[test]
     fn test_get_bytes_from_redis_value() {
-        let from_redis_value_handler: FromRedisValueImplHandler = FromRedisValueImplHandler::new();
+        let from_redis_value_handler: FromRedisValueHandler = FromRedisValueHandler::new();
 
         assert!(from_redis_value_handler
             .to_bytes(&Value::Data(
@@ -460,14 +475,14 @@ pub mod test_from_redis_value_extended_methods {
             .is_some());
 
         assert!(from_redis_value_handler
-            .to_optional_date_from_iso8601(&Value::Nil)
+            .to_optional_bytes(&Value::Nil)
             .unwrap()
             .is_none());
     }
 
     #[test]
     fn test_get_struct_instance_from_redis_value() {
-        let from_redis_value_handler: FromRedisValueImplHandler = FromRedisValueImplHandler::new();
+        let from_redis_value_handler: FromRedisValueHandler = FromRedisValueHandler::new();
 
         #[derive(Deserialize, Serialize)]
         struct Person {
