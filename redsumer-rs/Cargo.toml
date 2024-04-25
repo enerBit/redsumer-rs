@@ -3,14 +3,14 @@ name = "redsumer"
 description = "Lightweight implementation of Redis Streams for Rust"
 version = "0.4.0"
 edition = "2021"
-license-file = "LICENSE"
-readme = "README.md"
+license-file = "../LICENSE"
+readme = "../README.md"
 keywords = [
     "redis",
     "redis_streams",
 ]
-homepage = "https://github.com/enerBit/redsumer-rs/redsumer-rs"
-repository = "https://github.com/enerBit/redsumer-rs/redsumer-rs"
+homepage = "https://github.com/enerBit/redsumer-rs"
+repository = "https://github.com/enerBit/redsumer-rs"
 documentation = "https://docs.rs/redsumer"
 categories = [
     "database-implementations",
@@ -29,7 +29,3 @@ bytes = { version = "1.6.0" }
 serde = { version = "1.0.198", features = ["derive"] }
 serde_json = { version = "1.0.116" }
 log = { version = "0.4.21" }
-
-[dev-dependencies]
-structmap = { version = "0.1.6" }
-structmap-derive = { version = "0.1.6" }
