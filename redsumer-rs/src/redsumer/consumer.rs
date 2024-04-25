@@ -1,7 +1,6 @@
 use log::{debug, warn};
 use std::fmt::Debug;
 
-use redis::streams::StreamPendingReply;
 use redis::{
     streams::{
         StreamClaimOptions, StreamClaimReply, StreamId, StreamPendingCountReply, StreamReadOptions,
@@ -225,59 +224,33 @@ impl<'c> RedsumerConsumer<'c> {
         Ok(pending_messages)
     }
 
-    /// Claim pending messages from *stream* from *since_id* to the newest one until to a maximum of *claimed_messages_count* using [`Commands::xclaim_options`] ([`XCLAIM`](https://redis.io/commands/xclaim/)).
+    /// Claim pending messages from *stream* from *since_id* to the newest one until to a maximum of *claimed_messages_count* using [`Commands::xpending_count`] ([`XPENDING`](https://redis.io/commands/xpending/)) and [`Commands::xclaim_options`] ([`XCLAIM`](https://redis.io/commands/xclaim/)).
     fn claim_pending_messages(&self) -> RedsumerResult<Vec<StreamId>> {
-        let xpending_count_response: StreamPendingCountReply =
-            self.get_client().get_connection()?.xpending_count(
+        Ok(self
+            .get_client()
+            .get_connection()?
+            .xclaim_options::<_, _, _, _, _, StreamClaimReply>(
                 self.get_stream_name(),
                 self.get_group_name(),
-                self.get_since_id(),
-                "+",
-                self.get_client()
+                self.get_consumer_name(),
+                self.get_min_idle_time_milliseconds(),
+                &(self
+                    .get_client()
                     .get_connection()?
-                    .xpending::<_, _, StreamPendingReply>(
+                    .xpending_count::<_, _, _, _, _, StreamPendingCountReply>(
                         self.get_stream_name(),
                         self.get_group_name(),
-                    )?
-                    .count(),
-            )?;
-
-        let mut non_own_pending_messages: Vec<Id> = Vec::new();
-        for pending_message in xpending_count_response.ids.iter() {
-            if pending_message.consumer.ne(&self.get_consumer_name())
-                && pending_message
-                    .last_delivered_ms
-                    .ge(&self.get_min_idle_time_milliseconds())
-            {
-                non_own_pending_messages.push(pending_message.id.to_owned());
-            }
-
-            if non_own_pending_messages
-                .len()
-                .ge(&self.get_claimed_messages_count())
-            {
-                break;
-            }
-        }
-
-        let claimed_messages: Vec<StreamId> = match non_own_pending_messages.len().gt(&0) {
-            true => {
-                self.get_client()
-                    .get_connection()?
-                    .xclaim_options::<_, _, _, _, _, StreamClaimReply>(
-                        self.get_stream_name(),
-                        self.get_group_name(),
-                        self.get_consumer_name(),
-                        self.get_min_idle_time_milliseconds(),
-                        &non_own_pending_messages,
-                        StreamClaimOptions::default(),
+                        self.get_since_id(),
+                        "+",
+                        self.get_claimed_messages_count(),
                     )?
                     .ids
-            }
-            false => Vec::new(),
-        };
-
-        Ok(claimed_messages)
+                    .iter()
+                    .map(|stream_pending_id| stream_pending_id.id.to_owned())
+                    .collect::<Vec<Id>>()),
+                StreamClaimOptions::default(),
+            )?
+            .ids)
     }
 
     /// Consume messages from *stream* according to the following steps:
