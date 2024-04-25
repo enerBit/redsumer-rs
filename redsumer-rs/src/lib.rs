@@ -17,7 +17,7 @@
 //! let port: &str = "6379";
 //! let db: &str = "0";
 //! let stream_name: &str = "my-stream";
-//! 
+//!
 //! let producer_result: RedsumerResult<RedsumerProducer> =
 //!     RedsumerProducer::new(
 //!     credentials,
@@ -34,7 +34,7 @@
 //!
 //! ```rust,no_run
 //! use redsumer::*;
-//! 
+//!
 //! let credentials: Option<ClientCredentials> = None;
 //! let host: &str = "localhost";
 //! let port: &str = "6379";
@@ -48,7 +48,7 @@
 //! let pending_messages_count: usize = 2;
 //! let claimed_messages_count: usize = 1;
 //! let block: u8 = 5;
-//! 
+//!
 //! let consumer_result: RedsumerResult<RedsumerConsumer> = RedsumerConsumer::new(
 //!     credentials,
 //!     host,
@@ -64,7 +64,7 @@
 //!     claimed_messages_count,
 //!     block,
 //! );
-//! 
+//!
 //! let mut consumer: RedsumerConsumer = consumer_result.unwrap();
 //! ```
 //!
