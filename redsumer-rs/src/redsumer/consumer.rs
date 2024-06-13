@@ -234,7 +234,7 @@ impl<'c> RedsumerConsumer<'c> {
                 self.get_group_name(),
                 self.get_consumer_name(),
                 self.get_min_idle_time_milliseconds(),
-                &(self
+                &self
                     .get_client()
                     .get_connection()?
                     .xpending_count::<_, _, _, _, _, StreamPendingCountReply>(
@@ -247,7 +247,7 @@ impl<'c> RedsumerConsumer<'c> {
                     .ids
                     .iter()
                     .map(|stream_pending_id| stream_pending_id.id.to_owned())
-                    .collect::<Vec<Id>>()),
+                    .collect::<Vec<Id>>(),
                 StreamClaimOptions::default(),
             )?
             .ids)
