@@ -226,6 +226,25 @@ impl<'c> RedsumerConsumer<'c> {
 
     /// Claim pending messages from *stream* from *since_id* to the newest one until to a maximum of *claimed_messages_count* using [`Commands::xpending_count`] ([`XPENDING`](https://redis.io/commands/xpending/)) and [`Commands::xclaim_options`] ([`XCLAIM`](https://redis.io/commands/xclaim/)).
     fn claim_pending_messages(&self) -> RedsumerResult<Vec<StreamId>> {
+        let ids_to_claim: Vec<Id> = self
+            .get_client()
+            .get_connection()?
+            .xpending_count::<_, _, _, _, _, StreamPendingCountReply>(
+                self.get_stream_name(),
+                self.get_group_name(),
+                self.get_since_id(),
+                "+",
+                self.get_claimed_messages_count(),
+            )?
+            .ids
+            .iter()
+            .map(|stream_pending_id| stream_pending_id.id.to_owned())
+            .collect::<Vec<Id>>();
+
+        if ids_to_claim.is_empty() {
+            return Ok(Vec::new());
+        }
+
         Ok(self
             .get_client()
             .get_connection()?
@@ -234,20 +253,7 @@ impl<'c> RedsumerConsumer<'c> {
                 self.get_group_name(),
                 self.get_consumer_name(),
                 self.get_min_idle_time_milliseconds(),
-                &self
-                    .get_client()
-                    .get_connection()?
-                    .xpending_count::<_, _, _, _, _, StreamPendingCountReply>(
-                        self.get_stream_name(),
-                        self.get_group_name(),
-                        self.get_since_id(),
-                        "+",
-                        self.get_claimed_messages_count(),
-                    )?
-                    .ids
-                    .iter()
-                    .map(|stream_pending_id| stream_pending_id.id.to_owned())
-                    .collect::<Vec<Id>>(),
+                &ids_to_claim,
                 StreamClaimOptions::default(),
             )?
             .ids)
