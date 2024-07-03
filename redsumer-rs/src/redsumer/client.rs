@@ -3,6 +3,10 @@ use redis::Client;
 use super::types::RedsumerResult;
 
 /// To hold credentials to authenticate in *Redis*.
+///
+/// This credentials are used to authenticate in *Redis* when server requires it. If server does not require it, you set it to `None`.
+///
+///  This crate uses a connection URL in format: `redis://[<username>][:<password>@]<hostname>:<port>/<db>`. Other formats are not supported yet.
 pub struct ClientCredentials<'k> {
     user: &'k str,
     password: &'k str,
@@ -20,9 +24,13 @@ impl<'k> ClientCredentials<'k> {
     }
 
     /// Build a new instance of [`ClientCredentials`].
+    ///
     /// # Arguments:
     /// - **user**: Redis user.
     /// - **password**: Redis password.
+    ///
+    /// # Returns:
+    /// A new instance of [`ClientCredentials`].
     ///
     /// ```rust,no_run
     /// use redsumer::ClientCredentials;
@@ -41,6 +49,9 @@ impl<'k> ClientCredentials<'k> {
 /// - **host**: Redis host.
 /// - **port**: Redis port.
 /// - **db**: Redis database.
+///
+/// # Returns:
+/// - A [`RedsumerResult`] with a new instance of [`Client`] to connect to *Redis*. Otherwise, a [`RedsumerError`] is returned.
 pub fn get_redis_client(
     credentials: Option<ClientCredentials>,
     host: &str,
