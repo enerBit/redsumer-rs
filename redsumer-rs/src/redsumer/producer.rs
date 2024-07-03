@@ -1,9 +1,13 @@
-use redis::{Client, Commands, ToRedisArgs};
+use redis::{Client, Commands, ConnectionLike, ErrorKind, RedisError, ToRedisArgs};
 
 use super::client::{get_redis_client, ClientCredentials};
-use super::types::{Id, RedsumerResult};
+
+#[allow(unused_imports)]
+use super::types::{Id, RedsumerError, RedsumerResult};
 
 /// A producer implementation of *Redis Streams*.
+///
+///  This struct is responsible for producing messages in a stream.
 #[derive(Debug, Clone)]
 pub struct RedsumerProducer<'p> {
     client: Client,
@@ -22,6 +26,12 @@ impl<'p> RedsumerProducer<'p> {
     }
 
     /// Build a new [`RedsumerProducer`] instance.
+    ///
+    /// Before creating a new producer, the following validations are performed:
+    ///
+    /// - If connection string is invalid, a [`RedsumerError`] is returned.
+    /// - If connection to Redis server can not be established, a [`RedsumerError`] is returned.
+    ///
     /// # Arguments:
     /// - **credentials**: Optional [`ClientCredentials`] to authenticate in Redis.
     /// - **host**: Redis host.
@@ -29,16 +39,23 @@ impl<'p> RedsumerProducer<'p> {
     /// - **db**: Redis database.
     /// - **stream_name**: Stream name to produce messages.
     ///
+    ///  # Returns:
+    ///  - A [`RedsumerResult`] with the new [`RedsumerProducer`] instance. Otherwise, a [`RedsumerError`] is returned.
+    ///
+    ///  # Example:
+    ///	Create a new [`RedsumerProducer`] instance.
     /// ```rust,no_run
     /// use redsumer::RedsumerProducer;
     ///
-    /// let producer = RedsumerProducer::new(
+    /// let producer: RedsumerProducer = RedsumerProducer::new(
     ///     None,
     ///     "localhost",
     ///     "6379",
     ///     "0",
     ///     "my_stream",
-    /// ).unwrap();
+    /// ).unwrap_or_else(|err| {
+    ///    panic!("Error creating producer: {:?}", err);
+    /// });
     /// ```
     pub fn new(
         credentials: Option<ClientCredentials<'p>>,
@@ -47,7 +64,14 @@ impl<'p> RedsumerProducer<'p> {
         db: &'p str,
         stream_name: &'p str,
     ) -> RedsumerResult<RedsumerProducer<'p>> {
-        let client: Client = get_redis_client(credentials, host, port, db)?;
+        let mut client: Client = get_redis_client(credentials, host, port, db)?;
+
+        if !client.check_connection() {
+            return Err(RedisError::from((
+                ErrorKind::TryAgain,
+                "Error getting connection to Redis server",
+            )));
+        };
 
         Ok(RedsumerProducer {
             client,
@@ -55,9 +79,17 @@ impl<'p> RedsumerProducer<'p> {
         })
     }
 
-    /// Produce a message in the stream, where message implements [`ToRedisArgs`].
+    /// Produce a new message in stream.
+    ///
+    ///  This method produces a new message in the stream setting the *ID* as "*", which means that Redis will generate a new *ID* for the message automatically with the current timestamp.
+    ///
+    ///  If stream does not exist, it will be created.
+    ///
     /// # Arguments:
-    /// - **message**: Message to produce in stream.
+    /// - **message**: Message to produce in stream. It must implement [`ToRedisArgs`].
+    ///
+    ///  # Returns:
+    /// - A [`RedsumerResult`] with the *ID* of the produced message. Otherwise, a [`RedsumerError`] is returned.
     pub async fn produce<M>(&self, message: M) -> RedsumerResult<Id>
     where
         M: ToRedisArgs,
