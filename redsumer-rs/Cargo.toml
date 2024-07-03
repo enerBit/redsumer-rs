@@ -1,7 +1,7 @@
 [package]
 name = "redsumer"
 description = "Lightweight implementation of Redis Streams for Rust"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 license-file = "../LICENSE"
 readme = "../README.md"
@@ -21,11 +21,11 @@ authors = [
 ]
 
 [dependencies]
-redis = { version = "0.25.3", features = ["tokio-comp", "streams"] }
+redis = { version = "0.25.4", features = ["tokio-comp", "streams"] }
 tokio = { version = "1.38.0", features = ["full"] }
-uuid = { version = "1.8.0" }
+uuid = { version = "1.9.1" }
 time = { version = "0.3.36", features = ["parsing"] }
 bytes = { version = "1.6.0" }
 serde = { version = "1.0.203", features = ["derive"] }
-serde_json = { version = "1.0.117" }
-log = { version = "0.4.21" }
+serde_json = { version = "1.0.120" }
+log = { version = "0.4.22" }
