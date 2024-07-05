@@ -16,7 +16,13 @@ pub mod test_redsumer {
             "test",
         );
 
-        assert!(producer_res.is_ok());
+        assert!(producer_res.is_err());
+
+        let error: RedsumerError = producer_res.unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "Error getting connection to Redis server- TryAgain"
+        );
     }
 
     #[tokio::test]
