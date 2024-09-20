@@ -1,4 +1,5 @@
 use redis::{Client, ToRedisArgs};
+use tracing::{debug, info};
 
 #[allow(unused_imports)]
 use crate::core::{
@@ -48,12 +49,13 @@ impl ProducerConfig {
     }
 }
 
-/// A producer implementation of Redis Streams.
-///
-///  This struct is responsible for producing messages in a stream.
+/// A producer implementation of Redis Streams. This struct is responsible for producing messages in a stream.
 #[derive(Debug, Clone)]
 pub struct Producer {
+    /// Redis client to interact with Redis server.
     client: Client,
+
+    /// Producer configuration parameters.
     config: ProducerConfig,
 }
 
@@ -91,8 +93,15 @@ impl Producer {
     ///  TODO!
     /// ```
     pub fn new(args: &ClientArgs, config: &ProducerConfig) -> RedsumerResult<Producer> {
+        debug!(
+            "Creating a new producer instance by: {:?} and {:?}",
+            args, config
+        );
+
         let mut client: Client = args.build()?;
         client.ping()?;
+
+        info!("Producer instance created successfully and it is ready to be used");
 
         Ok(Producer {
             client,

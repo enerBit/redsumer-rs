@@ -1,4 +1,5 @@
 use redis::{Commands, FromRedisValue, RedisResult, ToRedisArgs};
+use tracing::{debug, error};
 
 #[allow(unused_imports)]
 use crate::core::types::{RedsumerError, RedsumerResult};
@@ -11,7 +12,16 @@ where
     M: ToRedisArgs,
     ID: FromRedisValue,
 {
-    c.xadd_map(key, "*", map)
+    match c.xadd_map(key, "*", map) {
+        Ok(id) => {
+            debug!("Message produced successfully");
+            Ok(id)
+        }
+        Err(e) => {
+            error!("Error producing message: {:?}", e);
+            Err(e)
+        }
+    }
 }
 
 /// Produce a message to a Redis stream from a list of items. To set the ID of the message, this method use the value "*" to indicate that Redis should generate a new ID with the current timestamp.
@@ -23,7 +33,16 @@ where
     V: ToRedisArgs,
     ID: FromRedisValue,
 {
-    c.xadd(key, "*", items)
+    match c.xadd(key, "*", items) {
+        Ok(id) => {
+            debug!("Message produced successfully");
+            Ok(id)
+        }
+        Err(e) => {
+            error!("Error producing message: {:?}", e);
+            Err(e)
+        }
+    }
 }
 
 /// A trait that bundles methods for producing messages in a Redis stream
