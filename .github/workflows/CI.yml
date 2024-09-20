@@ -14,16 +14,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Redis streams service
-        uses: supercharge/redis-github-action@1.7.0
-        with:
-          redis-port: 6379
+      - uses: actions/checkout@v3
 
-      - name: Git checkout
-        uses: actions/checkout@v3
-          
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
+        with:
+          components: llvm-tools-preview
+		
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2.33.22
+        with:
+          tool: cargo-llvm-cov
+		
       - name: Build project
         run: cargo build --verbose
-        
+
+      - name: Verify project formatting
+        run: cargo fmt --all --check
+
+      - name: Check for possible errors and coding suggestions
+        run: cargo clippy --all-features
+
       - name: Run project tests
         run: cargo test --verbose
+
+      - name: Run tests with coverage for all features
+        run: cargo llvm-cov --workspace --all-features --codecov --output-path codecov.json
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4.3.1
+        with:
+          files: codecov.json
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
