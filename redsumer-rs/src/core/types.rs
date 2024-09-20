@@ -1,6 +1,6 @@
 use redis::RedisError;
 
-/// Error type for *redsumer* operations, it's an alias for [`RedisError`].
+/// Error type for *redsumer* operations, it is an alias for [`RedisError`].
 pub type RedsumerError = RedisError;
 
 /// Result type for *redsumer* operations.
