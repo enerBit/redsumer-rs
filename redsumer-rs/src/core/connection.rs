@@ -1,4 +1,5 @@
 use redis::{Commands, ErrorKind, RedisError, RedisResult};
+use tracing::{debug, error};
 
 #[allow(unused_imports)]
 use crate::core::types::{RedsumerError, RedsumerResult};
@@ -8,11 +9,15 @@ where
     C: Commands,
 {
     match c.check_connection() {
-        true => Ok("PONG".into()),
-        false => Err(RedisError::from((ErrorKind::ClientError,
-        "Connection Verification Error",
-        "The connection to the Redis server could not be verified. Please verify the client configuration or server availability".into(),
-        )))
+        true => {
+            debug!("The connection to the Redis server was verified");
+            Ok("PONG".into())
+        }
+        false => {
+            let e: &str = "The connection to the Redis server could not be verified. Please verify the client configuration or server availability";
+            error!(e);
+            Err(RedisError::from((ErrorKind::ClientError, e)))
+        }
     }
 }
 
@@ -67,6 +72,6 @@ mod test_connection {
 
         // Verify the connection to the server:
         assert!(ping_result.is_err());
-        assert_eq!(ping_result.unwrap_err().to_string(), "Connection Verification Error - ClientError: The connection to the Redis server could not be verified. Please verify the client configuration or server availability");
+        assert_eq!(ping_result.unwrap_err().to_string(), "The connection to the Redis server could not be verified. Please verify the client configuration or server availability- ClientError");
     }
 }
