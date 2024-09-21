@@ -5,7 +5,7 @@ use tracing::{debug, info};
 use crate::core::{
     client::{ClientArgs, ClientCredentials, RedisClientBuilder},
     connection::VerifyConnection,
-    redis_streams::producer::ProducerCommands,
+    streams::producer::ProducerCommands,
     types::{Id, RedsumerError, RedsumerResult},
 };
 
@@ -86,12 +86,6 @@ impl Producer {
     ///
     ///  # Returns:
     ///  - A [`RedsumerResult`] with the new [`Producer`] instance. Otherwise, a [`RedsumerError`] is returned.
-    ///
-    ///  # Example:
-    ///	Create a new [`Producer`] instance.
-    /// ```rust,no_run
-    ///  TODO!
-    /// ```
     pub fn new(args: &ClientArgs, config: &ProducerConfig) -> RedsumerResult<Producer> {
         debug!(
             "Creating a new producer instance by: {:?} and {:?}",
