@@ -1,4 +1,4 @@
 pub mod client;
 pub mod connection;
-pub mod redis_streams;
+pub mod streams;
 pub mod types;

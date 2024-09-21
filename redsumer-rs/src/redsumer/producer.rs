@@ -9,19 +9,6 @@ use crate::core::{
     types::{Id, RedsumerError, RedsumerResult},
 };
 
-/// Define the message to be produced in a stream. The message can be a map or a list of items.
-/// The map is a key-value pair where the key is the field and the value is the value.
-/// The items are a list of tuples where the first element is the field and the second element is the value.
-pub enum Message<M, F, V>
-where
-    M: ToRedisArgs,
-    F: ToRedisArgs,
-    V: ToRedisArgs,
-{
-    Map(M),
-    Items(Vec<(F, V)>),
-}
-
 /// Define the configuration parameters to create a producer instance.
 #[derive(Debug, Clone)]
 pub struct ProducerConfig {
@@ -103,33 +90,40 @@ impl Producer {
         })
     }
 
-    /// Produce a new message in stream.
+    /// Produce a new message in the stream from a map.
     ///
-    ///  This method produces a new message in the stream setting the *ID* as "*", which means that Redis will generate a new *ID* for the message automatically with the current timestamp.
-    ///
-    ///  If stream does not exist, it will be created.
+    ///  This method produces a new message in the stream setting the *ID* as "*", which means that Redis will generate a new *ID* for the message automatically with the current timestamp. If stream does not exist, it will be created.
     ///
     /// # Arguments:
-    /// - **message**: Message to produce in stream. It must implement [`ToRedisArgs`].
+    /// - **map**: A map with the message to be produced. It must implement the [`ToRedisArgs`] trait.
     ///
     ///  # Returns:
     /// - A [`RedsumerResult`] with the *ID* of the produced message. Otherwise, a [`RedsumerError`] is returned.
-    pub async fn produce<M, F, V>(&self, message: Message<M, F, V>) -> RedsumerResult<Id>
+    pub async fn produce_from_map<M>(&self, map: M) -> RedsumerResult<Id>
     where
         M: ToRedisArgs,
+    {
+        self.get_client()
+            .to_owned()
+            .produce_from_map(self.get_config().get_stream_name(), map)
+    }
+
+    /// Produce a new message in the stream from a list of items.
+    ///
+    /// This method produces a new message in the stream setting the *ID* as "*", which means that Redis will generate a new *ID* for the message automatically with the current timestamp. If stream does not exist, it will be created.
+    ///
+    /// # Arguments:
+    /// - **items**: A list of items with the message to be produced. Each item is a tuple with the field and the value. Both must implement the [`ToRedisArgs`] trait.
+    ///
+    /// # Returns:
+    /// - A [`RedsumerResult`] with the *ID* of the produced message. Otherwise, a [`RedsumerError`] is returned.
+    pub async fn produce_from_items<F, V>(&self, items: Vec<(F, V)>) -> RedsumerResult<Id>
+    where
         F: ToRedisArgs,
         V: ToRedisArgs,
     {
-        match message {
-            Message::Map(map) => self
-                .get_client()
-                .to_owned()
-                .produce_from_map(self.get_config().get_stream_name(), map),
-
-            Message::Items(items) => self
-                .get_client()
-                .to_owned()
-                .produce_from_items(self.get_config().get_stream_name(), items.as_slice()),
-        }
+        self.get_client()
+            .to_owned()
+            .produce_from_items(self.get_config().get_stream_name(), items.as_slice())
     }
 }
