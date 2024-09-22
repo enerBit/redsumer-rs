@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use redis::{Client, ConnectionAddr, ConnectionInfo, ProtocolVersion, RedisConnectionInfo};
 
 #[allow(unused_imports)]
-use super::types::{RedsumerError, RedsumerResult};
+use super::result::{RedsumerError, RedsumerResult};
 
 /// Communication protocol to be used by the client. It is an alias for [`ProtocolVersion`].
 pub type CommunicationProtocol = ProtocolVersion;

@@ -5,8 +5,8 @@ use tracing::{debug, info};
 use crate::core::{
     client::{ClientArgs, ClientCredentials, RedisClientBuilder},
     connection::VerifyConnection,
-    streams::producer::ProducerCommands,
-    types::{Id, RedsumerError, RedsumerResult},
+    result::{RedsumerError, RedsumerResult},
+    streams::{producer::ProducerCommands, types::Id},
 };
 
 /// Define the configuration parameters to create a producer instance.

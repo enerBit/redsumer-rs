@@ -2,7 +2,7 @@ use redis::{Commands, FromRedisValue, RedisResult, ToRedisArgs};
 use tracing::{debug, error};
 
 #[allow(unused_imports)]
-use crate::core::types::{RedsumerError, RedsumerResult};
+use crate::core::result::{RedsumerError, RedsumerResult};
 
 /// Produce a message to a Redis stream from a map. To set the ID of the message, this method use the value "*" to indicate that Redis should generate a new ID with the current timestamp.
 fn produce_from_map<C, K, M, ID>(c: &mut C, key: K, map: M) -> RedisResult<ID>
