@@ -5,6 +5,3 @@ pub type RedsumerError = RedisError;
 
 /// Result type for *redsumer* operations.
 pub type RedsumerResult<T> = Result<T, RedsumerError>;
-
-/// Stream message identifier.
-pub type Id = String;
