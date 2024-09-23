@@ -7,14 +7,14 @@
 //!
 //! ```ini
 //! [dependencies]
-//! redsumer = { git = "https://github.com/enerBit/redsumer-rs.git", package = "redsumer", version = "0.4.2" }
+//! redsumer = { git = "https://github.com/enerBit/redsumer-rs.git", package = "redsumer", version = "0.5.0-alpha.1" }
 //! ```
 //!
 //! You can depend on it via cargo by adding the following dependency to your `Cargo.toml` file:
 //!
 //! ```ini
 //! [dependencies]
-//! redsumer = { version = "0.4.2" }
+//! redsumer = { version = "0.5.0-alpha.1" }
 //! ```
 //!
 //! ## Basic Usage
@@ -32,38 +32,56 @@
 //!
 //! #[tokio::main]
 //! async fn main() {
-//! 	let credentials: Option<ClientCredentials> = None;
-//! 	let host: &str = "localhost";
-//! 	let port: &str = "6379";
-//! 	let db: &str = "0";
-//! 	let stream_name: &str = "my-stream";
+//!     let credentials: Option<ClientCredentials> = None;
+//!     let host: &str = "localhost";
+//!     let port: u16 = 6379;
+//!     let db: i64 = 0;
+//!     let stream_name: &str = "my-stream";
 //!
-//! 	let producer_result: RedsumerResult<RedsumerProducer> =
-//!     	RedsumerProducer::new(
-//!     		credentials,
-//!     		host,
-//!     		port,
-//!     		db,
-//!     		stream_name,
-//! 		);
+//!     let args: ClientArgs = ClientArgs::new(
+//!         credentials,
+//!         host,
+//!         port,
+//!         db,
+//!         CommunicationProtocol::RESP2,
+//!     );
 //!
-//!		let producer: RedsumerProducer = producer_result.unwrap_or_else(|error| {
-//!    		panic!("Error creating a new RedsumerProducer instance: {:?}", error);
-//! 	});
+//!     let config: ProducerConfig = ProducerConfig::new(stream_name);
 //!
-//! 	let mut message: BTreeMap<&str, String> = BTreeMap::new();
-//! 	message.insert("id", Uuid::default().to_string());
-//! 	message.insert("started_at", OffsetDateTime::now_utc().to_string());
+//!     let producer_result: RedsumerResult<Producer> =
+//!         Producer::new(
+//!             &args,
+//!             &config,
+//!         );
 //!
-//! 	let id: Id = producer.produce(message).await.unwrap_or_else(|error| {
-//!    		panic!("Error producing stream message from BTreeMap: {:?}", error.to_string());
-//! 	});
+//!     let producer: Producer = producer_result.unwrap_or_else(|error| {
+//!         panic!("Error creating a new RedsumerProducer instance: {:?}", error);
+//!     });
+//!
+//!     let mut message_1: BTreeMap<&str, String> = BTreeMap::new();
+//!     message_1.insert("id", Uuid::new_v4().to_string());
+//!     message_1.insert("started_at", OffsetDateTime::now_utc().to_string());
+//!
+//!     let mut message_2: Vec<(String, String)> = Vec::new();
+//!     message_2.push(("id".to_string(), Uuid::new_v4().to_string()));
+//!     message_2.push(("started_at".to_string(), OffsetDateTime::now_utc().to_string()));
+//!
+//!     let id_1: Id = producer.produce_from_map(message_1).await.unwrap_or_else(|error| {
+//!         panic!("Error producing stream message from BTreeMap: {:?}", error.to_string());
+//!     });
+//!
+//!     let id_2: Id = producer.produce_from_items(message_2).await.unwrap_or_else(|error| {
+//!         panic!("Error producing stream message from Vec: {:?}", error.to_string());
+//!     });
+//!
+//!     println!("Message 1 produced with id: {:?}", id_1);
+//!     println!("Message 2 produced with id: {:?}", id_2);
 //! }
 //! ```
 //!
 //! Similar to the previous example, you can produce a message from a [HashMap](std::collections::HashMap) or a [HashSet](std::collections::HashSet). Go to [examples](https://github.com/enerBit/redsumer-rs/tree/main/examples) directory to see more  use cases like producing a stream message from an instance of a struct.
 //!
-//! The [produce](RedsumerProducer::produce) method accepts a generic type that implements the [ToRedisArgs](redis::ToRedisArgs) trait. Take a look at the documentation for more information.
+//! The [produce_from_map](Producer::produce_from_map) and [produce_from_items](Producer::produce_from_items) methods accepts generic types that implements the [ToRedisArgs](redis::ToRedisArgs) trait. Take a look at the documentation for more information.
 //!
 //! #### Consume messages from a stream:
 //!
@@ -75,73 +93,88 @@
 //!
 //! #[tokio::main]
 //! async fn main() {
-//! 	let credentials: Option<ClientCredentials> = None;
-//! 	let host: &str = "localhost";
-//! 	let port: &str = "6379";
-//! 	let db: &str = "0";
-//! 	let stream_name: &str = "my-stream";
-//! 	let group_name: &str = "group-name";
-//! 	let consumer_name: &str = "consumer";
-//! 	let since_id: &str = "0-0";
-//! 	let min_idle_time_milliseconds: usize = 1000;
-//! 	let new_messages_count: usize = 3;
-//! 	let pending_messages_count: usize = 2;
-//! 	let claimed_messages_count: usize = 1;
-//! 	let block: u8 = 5;
+//!     let credentials: Option<ClientCredentials> = None;
+//!     let host: &str = "localhost";
+//!     let port: u16 = 6379;
+//!     let db: i64 = 0;
+//!     let stream_name: &str = "my-stream";
+//!     let group_name: &str = "group-name";
+//!     let consumer_name: &str = "consumer";
+//!     let initial_stream_id: &str = "0-0";
+//!     let min_idle_time_milliseconds: usize = 1000;
+//!     let new_messages_count: usize = 3;
+//!     let pending_messages_count: usize = 2;
+//!     let claimed_messages_count: usize = 1;
+//!     let block: usize = 5;
 //!
-//! 	let consumer_result: RedsumerResult<RedsumerConsumer> = RedsumerConsumer::new(
-//!     	credentials,
-//!     	host,
-//!     	port,
-//!     	db,
-//!     	stream_name,
-//!     	group_name,
-//!     	consumer_name,
-//!     	since_id,
-//!     	min_idle_time_milliseconds,
-//!     	new_messages_count,
-//!     	pending_messages_count,
-//!     	claimed_messages_count,
-//!     	block,
-//! 	);
+//!     let args: ClientArgs = ClientArgs::new(
+//!         credentials,
+//!         host,
+//!         port,
+//!         db,
+//!         CommunicationProtocol::RESP2,
+//!     );
 //!
-//! 	let mut consumer: RedsumerConsumer = consumer_result.unwrap_or_else(|error| {
-//!    		panic!("Error creating a new RedsumerConsumer instance: {:?}", error);
-//! 	});
+//!     let config: ConsumerConfig = ConsumerConfig::new(
+//!         stream_name,
+//!         group_name,
+//!         consumer_name,
+//!         ReadNewMessagesOptions::new(
+//!             new_messages_count,
+//!             block
+//!         ),
+//!         ReadPendingMessagesOptions::new(
+//!             pending_messages_count
+//!         ),
+//!         ClaimMessagesOptions::new(
+//!             claimed_messages_count,
+//!             min_idle_time_milliseconds
+//!         ),
+//!     );
 //!
-//! 	loop {
-//!    		let messages: Vec<StreamId> = consumer.consume().await.unwrap_or_else(|error| {
-//! 	  		panic!("Error consuming messages from stream: {:?}", error);
-//!   		});
+//!     let consumer_result: RedsumerResult<Consumer> = Consumer::new(
+//!         args,
+//!         config,
+//!         Some(initial_stream_id.to_string()),
+//!     );
 //!
-//!   		for message in messages {
-//!    			if consumer.is_still_mine(&message.id).unwrap_or_else(|error| {
-//!   				panic!(
-//! 					"Error checking if message is still in consumer pending list: {:?}", error
-//! 				);
-//!  			}) {
-//!   				// Process message ...
-//!  				println!("Processing message: {:?}", message);
-//! 				// ...
+//!     let mut consumer: Consumer = consumer_result.unwrap_or_else(|error| {
+//!         panic!("Error creating a new RedsumerConsumer instance: {:?}", error);
+//!     });
 //!
-//! 				let ack: bool = consumer.ack(&message.id).await.unwrap_or_else(|error| {
-//!  				panic!("Error acknowledging message: {:?}", error);
-//! 				});
+//!     loop {
+//!         let messages: Vec<StreamId> = consumer.consume().await.unwrap_or_else(|error| {
+//!             panic!("Error consuming messages from stream: {:?}", error);
+//!         });
 //!
-//! 				if ack {
-//!  					println!("Message acknowledged: {:?}", message);
-//! 				}
-//! 			}
-//! 		}
-//! 	}
+//!         for message in messages {
+//!             if consumer.is_still_mine(&message.id).unwrap_or_else(|error| {
+//!                 panic!(
+//!                     "Error checking if message is still in consumer pending list: {:?}", error
+//!                 );
+//!             }) {
+//!                 // Process message ...
+//!                 println!("Processing message: {:?}", message);
+//!                 // ...
+//!
+//!                 let ack: bool = consumer.ack(&message.id).await.unwrap_or_else(|error| {
+//!                     panic!("Error acknowledging message: {:?}", error);
+//!                 });
+//!
+//!                 if ack {
+//!                      println!("Message acknowledged: {:?}", message);
+//!                 }
+//!             }
+//!         }
+//!     }
 //! }
 //! ```
 //!
-//! In this example, the [consume](RedsumerConsumer::consume) method is called in a loop to consume messages from the stream.
-//! The [consume](RedsumerConsumer::consume) method returns a vector of [StreamId](redis::StreamId) instances. Each [StreamId](redis::StreamId) instance represents a message in the stream.
-//! The [is_still_mine](RedsumerConsumer::is_still_mine) method is used to check if the message is still in the consumer pending list.
-//! If it is, the message is processed and then acknowledged using the [ack](RedsumerConsumer::ack) method.
-//! The [ack](RedsumerConsumer::ack) method returns a boolean indicating if the message was successfully acknowledged.
+//! In this example, the [consume](Consumer::consume) method is called in a loop to consume messages from the stream.
+//! The [consume](Consumer::consume) method returns a vector of [StreamId](redis::StreamId) instances. Each [StreamId](redis::StreamId) instance represents a message in the stream.
+//! The [is_still_mine](Consumer::is_still_mine) method is used to check if the message is still in the consumer pending list.
+//! If it is, the message is processed and then acknowledged using the [ack](Consumer::ack) method.
+//! The [ack](Consumer::ack) method returns a boolean indicating if the message was successfully acknowledged.
 //!
 //! The main objective of this message consumption strategy is to minimize the possibility that two or more consumers from the same consumer group operating simultaneously consume the same message at the same time.
 //! Knowing that it is a complex problem with no definitive solution, including business logic in the message processing instance will always improve results.
@@ -155,7 +188,6 @@
 //! #### Unwrap [Value](redis::Value) to a specific type:
 //!
 //! The [Value](redis::Value) enum represents a Redis value. It can be converted to a specific type using the [from_redis_value](redis::from_redis_value) function. This function can be imported from the [redis] module.
-//! ***redsumer*** includes the [FromRedisValueHandler] struct that implements the [FromRedisValue](redis::FromRedisValue) trait for a lot of types. It is useful to convert a [Value](redis::Value) to a specific type reducing boilerplate code and total lines of code.
 //!
 //! ## Contributing
 //!
@@ -166,12 +198,19 @@
 //! - **Pull Requests**: If you've fixed a bug or implemented a new feature, we'd love to see your work! Please submit a pull request. Make sure your code follows the existing style and all tests pass.
 //!
 //! Thank you for your interest in improving `redsumer-rs`!
+mod core;
 mod redsumer;
 
-pub use redsumer::client::ClientCredentials;
-pub use redsumer::consumer::*;
-pub use redsumer::producer::*;
-pub use redsumer::types::*;
+pub use core::{
+    client::{ClientArgs, ClientCredentials, CommunicationProtocol},
+    result::{RedsumerError, RedsumerResult},
+    streams::types::Id,
+};
+pub use redsumer::consumer::{
+    ClaimMessagesOptions, Consumer, ConsumerConfig, ReadNewMessagesOptions,
+    ReadPendingMessagesOptions,
+};
+pub use redsumer::producer::{Producer, ProducerConfig};
 
 pub mod redis {
     //! Utilities from [redis] crate.
