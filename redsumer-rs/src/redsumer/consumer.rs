@@ -38,7 +38,7 @@ impl ReadNewMessagesOptions {
     ///
     /// # Arguments:
     /// - **count**: The number of new messages to read from the stream.
-    /// - **block**: The block time [seconds] to wait for new messages to arrive in the stream.
+    /// - **block**: The block time in seconds to wait for new messages to arrive in the stream.
     ///
     /// # Returns:
     /// A new instance of [`ReadNewMessagesOptions`] with the given count and block time.
@@ -117,7 +117,7 @@ impl ClaimMessagesOptions {
     ///
     /// # Arguments:
     /// - **count**: The number of messages to claim from the stream.
-    /// - **min_idle_time**: The min idle time [milliseconds] to claim the messages.
+    /// - **min_idle_time**: The min idle time in milliseconds to claim the messages.
     ///
     /// # Returns:
     /// A new instance of [`ClaimMessagesOptions`] with the given count, min idle time and latest pending message ID.
@@ -263,7 +263,7 @@ impl Consumer {
     /// - **initial_stream_id**: The ID of the message to start consuming.
     ///
     ///  # Returns:
-    /// - A [`RedsumerResult`] containing a [`RedsumerConsumer`] instance. Otherwise, a [`RedsumerError`] is returned.
+    /// - A [`RedsumerResult`] containing a [`Consumer`] instance. Otherwise, a [`RedsumerError`] is returned.
     pub fn new(
         args: ClientArgs,
         config: ConsumerConfig,

@@ -174,9 +174,7 @@ where
 
             Ok((pending_messages, latest_pending_message_id))
         }
-        false => {
-            return Ok((Vec::new(), BEGINNING_OF_TIME_ID.to_owned()));
-        }
+        false => Ok((Vec::new(), BEGINNING_OF_TIME_ID.to_owned())),
     }
 }
 
@@ -211,9 +209,7 @@ where
 
             Ok((reply.claimed.to_owned(), reply.next_stream_id.to_owned()))
         }
-        false => {
-            return Ok((Vec::new(), BEGINNING_OF_TIME_ID.to_owned()));
-        }
+        false => Ok((Vec::new(), BEGINNING_OF_TIME_ID.to_owned())),
     }
 }
 
@@ -1189,7 +1185,7 @@ mod test_if_is_still_mine {
 
         // Verify the result:
         assert!(result.is_ok());
-        // TODO! assert!(result.unwrap());
+        assert!(result.unwrap());
     }
 
     #[test]
