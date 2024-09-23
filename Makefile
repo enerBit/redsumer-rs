@@ -15,3 +15,9 @@ test-llvm-cov:
 
 test:
 	cargo test --all-features
+
+doc:
+	cargo doc --all-features
+
+doc-open:
+	cargo doc --all-features --open
