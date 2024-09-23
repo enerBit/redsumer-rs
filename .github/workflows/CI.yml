@@ -36,9 +36,13 @@ jobs:
         run: cargo clippy --all-features
 
       - name: Run project tests
+        env:
+          RUST_LOG: warn
         run: cargo test --verbose
 
       - name: Run tests with coverage for all features
+        env:
+          RUST_LOG: warn
         run: cargo llvm-cov --workspace --all-features --codecov --output-path codecov.json
 
       - name: Upload coverage to Codecov
