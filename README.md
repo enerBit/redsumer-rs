@@ -181,8 +181,6 @@ The [ack](Consumer::ack) method returns a boolean indicating if the message was 
 The main objective of this message consumption strategy is to minimize the possibility that two or more consumers from the same consumer group operating simultaneously consume the same message at the same time.
 Knowing that it is a complex problem with no definitive solution, including business logic in the message processing instance will always improve results.
 
-Take a look at the [examples](https://github.com/enerBit/redsumer-rs/tree/main/examples) directory to see more use cases.
-
 #### Utilities from [redis] crate:
 
 The [redis] module provides utilities from the [redis](https://docs.rs/redis) crate. You can use these utilities to interact with Redis values and errors.
