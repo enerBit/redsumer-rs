@@ -37,6 +37,7 @@ impl ProducerConfig {
 }
 
 /// Reply of a produced message in a stream.
+#[derive(Debug, Clone)]
 pub struct ProduceMessageReply {
     /// *ID* of the produced message.
     id: Id,
@@ -118,7 +119,7 @@ impl Producer {
     /// - **map**: A map with the message to be produced. It must implement the [`ToRedisArgs`] trait.
     ///
     ///  # Returns:
-    /// - A [`RedsumerResult`] with the *ID* of the produced message. Otherwise, a [`RedsumerError`] is returned.
+    /// - A [`RedsumerResult`] with a [`ProduceMessageReply`] instance. Otherwise, a [`RedsumerError`] is returned.
     pub async fn produce_from_map<M>(&self, map: M) -> RedsumerResult<ProduceMessageReply>
     where
         M: ToRedisArgs,
@@ -137,7 +138,7 @@ impl Producer {
     /// - **items**: A list of items with the message to be produced. Each item is a tuple with the field and the value. Both must implement the [`ToRedisArgs`] trait.
     ///
     /// # Returns:
-    /// - A [`RedsumerResult`] with the *ID* of the produced message. Otherwise, a [`RedsumerError`] is returned.
+    /// - A [`RedsumerResult`] with a [`ProduceMessageReply`] instance. Otherwise, a [`RedsumerError`] is returned.
     pub async fn produce_from_items<F, V>(
         &self,
         items: Vec<(F, V)>,
