@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [ "main" ]
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -39,12 +36,4 @@ jobs:
         run: cargo test --verbose
 
       - name: Run tests with coverage for all features
-        run: cargo llvm-cov --workspace --all-features --codecov --output-path codecov.json
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4.3.1
-        with:
-          files: codecov.json
-          fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: cargo llvm-cov --workspace --all-features --summary-only --fail-under-lines 90
