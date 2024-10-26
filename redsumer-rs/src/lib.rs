@@ -1,7 +1,7 @@
 //! A lightweight implementation of Redis Streams for Rust, allowing you to manage streaming messages in a simplified way. With redsumer you can:
 //!
 //! - **Produce** new messages in a specific *stream*.
-//! - **Consume** messages from specific *stream*, setting config parameters that allow you a flexible implementation. It also provides an option to minimize the possibility of two or more consumers from the same consumer group consuming the same message simultaneously.
+//! - **Consume** messages from specific *stream*, setting config parameters that allow you a flexible implementation. It also provides an option to minimize the possibility of consuming the same message simultaneously by more than one consumers from the same consumer group.
 //!
 //! To use ***redsumer*** from GitHub repository with specific version, set the dependency in Cargo.toml file as follows:
 //!
@@ -193,13 +193,13 @@
 //!
 //! ## Contributing
 //!
-//! We welcome contributions to `redsumer-rs`. Here are some ways you can contribute:
+//! We welcome contributions to **redsumer** project. Here are some ways you can contribute:
 //!
 //! - **Bug Reports**: If you find a bug, please create an issue detailing the problem, the steps to reproduce it, and the expected behavior.
 //! - **Feature Requests**: If you have an idea for a new feature or an enhancement to an existing one, please create an issue describing your idea.
 //! - **Pull Requests**: If you've fixed a bug or implemented a new feature, we'd love to see your work! Please submit a pull request. Make sure your code follows the existing style and all tests pass.
 //!
-//! Thank you for your interest in improving `redsumer-rs`!
+//! Thank you for your interest in improving **redsumer**!
 mod core;
 mod redsumer;
 
@@ -230,12 +230,12 @@ pub mod redis {
 }
 
 pub mod results {
-    //! The result types used in `redsumer-rs`.
+    //! The result types used in redsumer.
     pub use super::core::result::{RedsumerError, RedsumerResult};
 }
 
 pub mod prelude {
-    //! A glob import for the most common types and traits used in `redsumer-rs`.
+    //! A global import for crate resources.
     pub use super::client::*;
     pub use super::consumer::*;
     pub use super::producer::*;
