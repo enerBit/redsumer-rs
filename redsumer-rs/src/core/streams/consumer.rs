@@ -10,7 +10,9 @@ use tracing::{debug, error, warn};
 #[allow(unused_imports)]
 use crate::core::{
     result::{RedsumerError, RedsumerResult},
-    streams::types::{LatestPendingMessageId, NextIdToClaim},
+    streams::types::{
+        LastDeliveredMilliseconds, LatestPendingMessageId, NextIdToClaim, TotalTimesDelivered,
+    },
 };
 
 pub const BEGINNING_OF_TIME_ID: &str = "0-0";
@@ -220,7 +222,11 @@ fn is_still_mine<C, K, G, CN, ID>(
     group: G,
     consumer: CN,
     id: ID,
-) -> RedsumerResult<bool>
+) -> RedsumerResult<(
+    bool,
+    Option<LastDeliveredMilliseconds>,
+    Option<TotalTimesDelivered>,
+)>
 where
     C: Commands,
     K: ToRedisArgs,
@@ -228,25 +234,27 @@ where
     CN: ToRedisArgs,
     ID: ToRedisArgs,
 {
-    match conn.xpending_consumer_count::<_, _, _, _, _, _, StreamPendingCountReply>(
-        key, group, &id, &id, 1, consumer,
-    ) {
-        Ok(r) => match r.ids.len().gt(&0) {
-            true => {
-                debug!("The message is still in the consumer pending list");
-                Ok(true)
-            }
-            false => {
-                debug!("The message is not in the consumer pending list");
-                Ok(false)
-            }
-        },
-        Err(e) => {
-            error!(
-                "Error verifying if message is still in consumer pending list: {:?}",
-                e
-            );
-            Err(e)
+    let reply: StreamPendingCountReply = conn
+        .xpending_consumer_count::<_, _, _, _, _, _, StreamPendingCountReply>(
+            key, group, &id, &id, 1, consumer,
+        )?;
+
+    if reply.ids.len().gt(&1) {
+        error!("More than one pending message found searching for a single message Id");
+        return Err(RedisError::from((
+            ErrorKind::ClientError,
+            "Error verifying if stream exists",
+        )));
+    }
+
+    match reply.ids.first() {
+        Some(m) => {
+            debug!("The message is still in the consumer pending list");
+            Ok((true, Some(m.last_delivered_ms), Some(m.times_delivered)))
+        }
+        None => {
+            debug!("The message is not in the consumer pending list");
+            Ok((false, None, None))
         }
     }
 }
@@ -409,7 +417,11 @@ where
         group: G,
         consumer: CN,
         id: ID,
-    ) -> RedsumerResult<bool>
+    ) -> RedsumerResult<(
+        bool,
+        Option<LastDeliveredMilliseconds>,
+        Option<TotalTimesDelivered>,
+    )>
     where
         G: ToRedisArgs,
         CN: ToRedisArgs,
@@ -517,7 +529,11 @@ where
         group: G,
         consumer: CN,
         id: ID,
-    ) -> RedsumerResult<bool>
+    ) -> RedsumerResult<(
+        bool,
+        Option<LastDeliveredMilliseconds>,
+        Option<TotalTimesDelivered>,
+    )>
     where
         G: ToRedisArgs,
         CN: ToRedisArgs,
@@ -1176,16 +1192,31 @@ mod test_if_is_still_mine {
                     Value::BulkString(b"1526984818136-0".to_vec()),
                     Value::BulkString(b"consumer-123".to_vec()),
                     Value::Int(196415),
-                    Value::Int(1),
+                    Value::Int(5),
                 ])])),
             )]);
 
         // Verify if the message is still in the consumer pending list:
-        let result: RedsumerResult<bool> = conn.is_still_mine(key, group, consumer, id);
+        let result: RedsumerResult<(
+            bool,
+            Option<LastDeliveredMilliseconds>,
+            Option<TotalTimesDelivered>,
+        )> = conn.is_still_mine(key, group, consumer, id);
 
         // Verify the result:
         assert!(result.is_ok());
-        assert!(result.unwrap());
+
+        let reply: (
+            bool,
+            Option<LastDeliveredMilliseconds>,
+            Option<TotalTimesDelivered>,
+        ) = result.unwrap();
+
+        assert!(reply.0);
+        assert!(reply.1.is_some());
+        assert!(reply.1.unwrap().eq(&196415));
+        assert!(reply.2.is_some());
+        assert!(reply.2.unwrap().eq(&5));
     }
 
     #[test]
@@ -1210,11 +1241,24 @@ mod test_if_is_still_mine {
             )]);
 
         // Verify if the message is still in the consumer pending list:
-        let result: RedsumerResult<bool> = conn.is_still_mine(key, group, consumer, id);
+        let result: RedsumerResult<(
+            bool,
+            Option<LastDeliveredMilliseconds>,
+            Option<TotalTimesDelivered>,
+        )> = conn.is_still_mine(key, group, consumer, id);
 
         // Verify the result:
         assert!(result.is_ok());
-        assert!(!result.unwrap());
+
+        let reply: (
+            bool,
+            Option<LastDeliveredMilliseconds>,
+            Option<TotalTimesDelivered>,
+        ) = result.unwrap();
+
+        assert!(!reply.0);
+        assert!(reply.1.is_none());
+        assert!(reply.2.is_none());
     }
 
     #[test]
@@ -1241,7 +1285,11 @@ mod test_if_is_still_mine {
             )]);
 
         // Verify if the message is still in the consumer pending list:
-        let result: RedsumerResult<bool> = conn.is_still_mine(key, group, consumer, "1-0");
+        let result: RedsumerResult<(
+            bool,
+            Option<LastDeliveredMilliseconds>,
+            Option<TotalTimesDelivered>,
+        )> = conn.is_still_mine(key, group, consumer, "1-0");
 
         // Verify the result:
         assert!(result.is_err());
