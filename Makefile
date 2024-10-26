@@ -11,7 +11,7 @@ install-llvm-cov:
 	cargo install cargo-llvm-cov
 
 test-llvm-cov:
-	cargo llvm-cov --html --workspace --all-features
+	cargo llvm-cov --workspace --all-features --summary-only --fail-under-lines 80
 
 test:
 	cargo test --all-features

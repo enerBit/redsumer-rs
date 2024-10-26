@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [ "main" ]
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -36,19 +33,9 @@ jobs:
         run: cargo clippy --all-features
 
       - name: Run project tests
-        env:
-          RUST_LOG: warn
         run: cargo test --verbose
 
       - name: Run tests with coverage for all features
         env:
-          RUST_LOG: warn
-        run: cargo llvm-cov --workspace --all-features --codecov --output-path codecov.json
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4.3.1
-        with:
-          files: codecov.json
-          fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          MIN_LINE_COVERAGE_TARGET: 80
+        run: cargo llvm-cov --workspace --all-features --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
