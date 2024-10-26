@@ -215,6 +215,86 @@ impl ConsumerConfig {
     }
 }
 
+/// Define the kind of messages that were consumed by a specific consumer.
+enum MessagesKind {
+    /// The messages were obtained from the new messages list and have not been delivered before to any consumer.
+    New,
+
+    /// The messages were read from the consumer pending list. They were delivered to a consumer before, but they were not acked yet and they were not claimed by another consumer.
+    Pending,
+
+    /// The messages were claimed by another consumer and they were not acked yet.
+    Claimed,
+
+    /// Messages were not obtained from stream. It means that there are no new, pending or claimed messages to be processed by a consumer in the specified group.
+    NotFound,
+}
+
+impl MessagesKind {
+    /// Check if the messages are new.
+    fn are_new(&self) -> bool {
+        matches!(self, MessagesKind::New)
+    }
+
+    /// Check if the messages are pending.
+    fn are_pending(&self) -> bool {
+        matches!(self, MessagesKind::Pending)
+    }
+
+    /// Check if the messages were claimed.
+    fn were_claimed(&self) -> bool {
+        matches!(self, MessagesKind::Claimed)
+    }
+
+    /// Check if the messages were not found.
+    fn not_found(&self) -> bool {
+        matches!(self, MessagesKind::NotFound)
+    }
+}
+
+/// A reply to consume messages from a Redis stream. It contains a list of stream IDs and the kind of messages.
+pub struct ConsumeMessagesReply {
+    /// A list of stream IDs.
+    messages: Vec<StreamId>,
+
+    /// The kind of messages.
+    kind: MessagesKind,
+}
+
+impl ConsumeMessagesReply {
+    /// Get **messages**.
+    pub fn get_messages(&self) -> &Vec<StreamId> {
+        &self.messages
+    }
+
+    /// Verify if the messages are new.
+    pub fn are_new(&self) -> bool {
+        self.kind.are_new()
+    }
+
+    /// Verify if the messages are pending in the consumer pending list.
+    pub fn are_pending(&self) -> bool {
+        self.kind.are_pending()
+    }
+
+    /// Verify if the messages were claimed by another consumer.
+    pub fn were_claimed(&self) -> bool {
+        self.kind.were_claimed()
+    }
+
+    /// Verify if the messages were not found.
+    pub fn not_found(&self) -> bool {
+        self.kind.not_found()
+    }
+}
+
+/// Convert a tuple into a [`ConsumeMessagesReply`] instance.
+impl From<(Vec<StreamId>, MessagesKind)> for ConsumeMessagesReply {
+    fn from((messages, kind): (Vec<StreamId>, MessagesKind)) -> Self {
+        ConsumeMessagesReply { messages, kind }
+    }
+}
+
 /// A reply to verify if a specific message is still in consumer pending list.
 pub struct IsStillMineReply {
     /// A boolean value indicating if the message is still in consumer pending list.
@@ -372,8 +452,8 @@ impl Consumer {
     ///  *No arguments*
     ///
     ///  # Returns:
-    ///  - A [`RedsumerResult`] containing a list of [`StreamId`] if new, pending or claimed messages are found, otherwise an empty list is returned. If an error occurs, a [`RedsumerError`] is returned.
-    pub async fn consume(&mut self) -> RedsumerResult<Vec<StreamId>> {
+    ///  - A [`RedsumerResult`] containing a list of [`ConsumeMessagesReply`] if new, pending or claimed messages are found, otherwise an empty list is returned. If an error occurs, a [`RedsumerError`] is returned.
+    pub async fn consume(&mut self) -> RedsumerResult<ConsumeMessagesReply> {
         debug!(
             "Consuming messages from stream {}",
             self.get_config().get_stream_name()
@@ -397,10 +477,13 @@ impl Consumer {
         )?;
         if new_messages.len().gt(&0) {
             debug!("Total new messages found: {}", new_messages.len());
-            return Ok(new_messages);
+            return Ok((new_messages, MessagesKind::New).into());
         }
 
-        debug!("Processing pending messages");
+        debug!(
+            "Processing pending messages by: {:?}",
+            self.get_config().get_read_pending_messages_options()
+        );
 
         let (pending_messages, latest_pending_message_id): (Vec<StreamId>, LatestPendingMessageId) =
             self.get_client().to_owned().read_pending_messages(
@@ -420,11 +503,13 @@ impl Consumer {
         self.update_latest_pending_message_id(&latest_pending_message_id);
         if pending_messages.len().gt(&0) {
             debug!("Total pending messages found: {}", pending_messages.len());
-
-            return Ok(pending_messages);
+            return Ok((pending_messages, MessagesKind::Pending).into());
         }
 
-        debug!("Processing claimed messages");
+        debug!(
+            "Processing claimed messages by: {:?}",
+            self.get_config().get_claim_messages_options()
+        );
 
         let (claimed_messages, next_id_to_claim): (Vec<StreamId>, NextIdToClaim) =
             self.get_client().to_owned().claim_pending_messages(
@@ -445,12 +530,12 @@ impl Consumer {
         self.update_next_id_to_claim(&next_id_to_claim);
         if claimed_messages.len().gt(&0) {
             debug!("Total claimed messages found: {}", claimed_messages.len());
-            return Ok(claimed_messages);
+            return Ok((claimed_messages, MessagesKind::Claimed).into());
         }
 
         debug!("No messages found");
 
-        Ok(Vec::new())
+        Ok((Vec::new(), MessagesKind::NotFound).into())
     }
 
     /// Verify if a specific message by *id* is still in consumer pending list.
