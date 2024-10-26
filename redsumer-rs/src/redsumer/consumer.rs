@@ -583,3 +583,241 @@ impl Consumer {
             .map(AckMessageReply::from)
     }
 }
+
+#[cfg(test)]
+mod test_read_new_messages_options {
+    use crate::prelude::*;
+
+    #[test]
+    fn test_new_read_new_messages_options() {
+        // Define count and block:
+        let count: usize = 10;
+        let block: usize = 3;
+
+        // Create new ReadNewMessagesOptions instance:
+        let options: ReadNewMessagesOptions = ReadNewMessagesOptions::new(count, block);
+
+        // Verify the result:
+        assert_eq!(options.get_count(), count);
+        assert_eq!(options.get_block(), block);
+    }
+}
+
+#[cfg(test)]
+mod test_read_pending_messages_options {
+    use super::BEGINNING_OF_TIME_ID;
+    use crate::prelude::*;
+
+    #[test]
+    fn test_new_read_pending_messages_options() {
+        // Define count:
+        let count: usize = 10;
+
+        // Create new ReadPendingMessagesOptions instance:
+        let options: ReadPendingMessagesOptions = ReadPendingMessagesOptions::new(count);
+
+        // Verify the result:
+        assert_eq!(options.get_count(), count);
+        assert_eq!(
+            options.get_latest_pending_message_id(),
+            BEGINNING_OF_TIME_ID
+        );
+    }
+}
+
+#[cfg(test)]
+mod test_claim_messages_options {
+    use super::BEGINNING_OF_TIME_ID;
+    use crate::prelude::*;
+
+    #[test]
+    fn test_new_claim_messages_options() {
+        // Define count and min idle time:
+        let count: usize = 10;
+        let min_idle_time: usize = 1000;
+
+        // Create new ClaimMessagesOptions instance:
+        let options: ClaimMessagesOptions = ClaimMessagesOptions::new(count, min_idle_time);
+
+        // Verify the result:
+        assert_eq!(options.get_count(), count);
+        assert_eq!(options.get_min_idle_time(), min_idle_time);
+        assert_eq!(options.get_next_id_to_claim(), BEGINNING_OF_TIME_ID);
+    }
+}
+
+#[cfg(test)]
+mod test_consumer_config {
+    use super::BEGINNING_OF_TIME_ID;
+    use crate::prelude::*;
+
+    #[test]
+    fn test_new_consumer_config() {
+        // Define stream name, group name and consumer name:
+        let stream_name: &str = "stream";
+        let group_name: &str = "group";
+        let consumer_name: &str = "consumer";
+
+        // Define count, block, min idle time and initial stream id:
+        let count: usize = 10;
+        let block: usize = 3;
+        let min_idle_time: usize = 1000;
+
+        // Create new ReadNewMessagesOptions instance:
+        let read_new_messages_options: ReadNewMessagesOptions =
+            ReadNewMessagesOptions::new(count, block);
+
+        // Create new ReadPendingMessagesOptions instance:
+        let read_pending_messages_options: ReadPendingMessagesOptions =
+            ReadPendingMessagesOptions::new(count);
+
+        // Create new ClaimMessagesOptions instance:
+        let claim_messages_options: ClaimMessagesOptions =
+            ClaimMessagesOptions::new(count, min_idle_time);
+
+        // Create new ConsumerConfig instance:
+        let config: ConsumerConfig = ConsumerConfig::new(
+            stream_name,
+            group_name,
+            consumer_name,
+            read_new_messages_options,
+            read_pending_messages_options,
+            claim_messages_options,
+        );
+
+        // Verify the result:
+        assert_eq!(config.get_stream_name(), stream_name);
+        assert_eq!(config.get_group_name(), group_name);
+        assert_eq!(config.get_consumer_name(), consumer_name);
+
+        assert_eq!(config.get_read_new_messages_options().get_count(), count);
+        assert_eq!(config.get_read_new_messages_options().get_block(), block);
+
+        assert_eq!(
+            config.get_read_pending_messages_options().get_count(),
+            count
+        );
+        assert_eq!(
+            config
+                .get_read_pending_messages_options()
+                .get_latest_pending_message_id(),
+            BEGINNING_OF_TIME_ID
+        );
+
+        assert_eq!(config.get_claim_messages_options().get_count(), count);
+        assert_eq!(
+            config.get_claim_messages_options().get_min_idle_time(),
+            min_idle_time
+        );
+        assert_eq!(
+            config.get_claim_messages_options().get_next_id_to_claim(),
+            BEGINNING_OF_TIME_ID
+        );
+    }
+}
+
+#[cfg(test)]
+mod test_messages_kind {
+    use super::MessagesKind;
+
+    #[test]
+    fn test_messages_kind() {
+        // Create new MessagesKind instances:
+        let new_messages: MessagesKind = MessagesKind::New;
+        let pending_messages: MessagesKind = MessagesKind::Pending;
+        let claimed_messages: MessagesKind = MessagesKind::Claimed;
+        let not_found_messages: MessagesKind = MessagesKind::NotFound;
+
+        // Verify the result:
+        assert!(new_messages.are_new());
+        assert!(!new_messages.are_pending());
+        assert!(!new_messages.were_claimed());
+        assert!(!new_messages.not_found());
+
+        assert!(!pending_messages.are_new());
+        assert!(pending_messages.are_pending());
+        assert!(!pending_messages.were_claimed());
+        assert!(!pending_messages.not_found());
+
+        assert!(!claimed_messages.are_new());
+        assert!(!claimed_messages.are_pending());
+        assert!(claimed_messages.were_claimed());
+        assert!(!claimed_messages.not_found());
+
+        assert!(!not_found_messages.are_new());
+        assert!(!not_found_messages.are_pending());
+        assert!(!not_found_messages.were_claimed());
+        assert!(not_found_messages.not_found());
+    }
+}
+
+#[cfg(test)]
+mod test_consume_messages_reply {
+    use super::MessagesKind;
+    use crate::prelude::*;
+
+    #[test]
+    fn test_consume_messages_reply() {
+        // Define messages and kind:
+        let messages: Vec<StreamId> = vec![StreamId::default()];
+        let kind: MessagesKind = MessagesKind::New;
+
+        // Create new ConsumeMessagesReply instance:
+        let reply: ConsumeMessagesReply = ConsumeMessagesReply::from((messages, kind));
+
+        // Verify the result:
+        assert!(reply.get_messages().len().eq(&1));
+        assert!(reply.are_new());
+        assert!(!reply.are_pending());
+        assert!(!reply.were_claimed());
+        assert!(!reply.not_found());
+    }
+}
+
+#[cfg(test)]
+mod test_is_still_mine_reply {
+    use crate::prelude::*;
+
+    #[test]
+    fn test_is_still_mine_reply() {
+        // Define is still mine, last delivered milliseconds and total times delivered:
+        let is_still_mine: bool = true;
+        let last_delivered_milliseconds: Option<LastDeliveredMilliseconds> = Some(1000);
+        let total_times_delivered: Option<TotalTimesDelivered> = Some(787);
+
+        // Create new IsStillMineReply instance:
+        let reply: IsStillMineReply = IsStillMineReply::from((
+            is_still_mine,
+            last_delivered_milliseconds,
+            total_times_delivered,
+        ));
+
+        // Verify the result:
+        assert!(reply.is_still_mine());
+
+        assert!(reply.get_last_delivered_milliseconds().is_some());
+        assert!(reply
+            .get_last_delivered_milliseconds()
+            .eq(&last_delivered_milliseconds));
+
+        assert!(reply.get_total_times_delivered().is_some());
+        assert!(reply.get_total_times_delivered().eq(&total_times_delivered));
+    }
+}
+
+#[cfg(test)]
+mod test_ack_message_reply {
+    use crate::prelude::*;
+
+    #[test]
+    fn test_ack_message_reply() {
+        // Define was acked:
+        let was_acked: bool = true;
+
+        // Create new AckMessageReply instance:
+        let reply: AckMessageReply = AckMessageReply::from(was_acked);
+
+        // Verify the result:
+        assert!(reply.was_acked());
+    }
+}
