@@ -1192,16 +1192,31 @@ mod test_if_is_still_mine {
                     Value::BulkString(b"1526984818136-0".to_vec()),
                     Value::BulkString(b"consumer-123".to_vec()),
                     Value::Int(196415),
-                    Value::Int(1),
+                    Value::Int(5),
                 ])])),
             )]);
 
         // Verify if the message is still in the consumer pending list:
-        let result: RedsumerResult<bool> = conn.is_still_mine(key, group, consumer, id);
+        let result: RedsumerResult<(
+            bool,
+            Option<LastDeliveredMilliseconds>,
+            Option<TotalTimesDelivered>,
+        )> = conn.is_still_mine(key, group, consumer, id);
 
         // Verify the result:
         assert!(result.is_ok());
-        assert!(result.unwrap());
+
+        let reply: (
+            bool,
+            Option<LastDeliveredMilliseconds>,
+            Option<TotalTimesDelivered>,
+        ) = result.unwrap();
+
+        assert!(reply.0);
+        assert!(reply.1.is_some());
+        assert!(reply.1.unwrap().eq(&196415));
+        assert!(reply.2.is_some());
+        assert!(reply.2.unwrap().eq(&5));
     }
 
     #[test]
@@ -1226,11 +1241,24 @@ mod test_if_is_still_mine {
             )]);
 
         // Verify if the message is still in the consumer pending list:
-        let result: RedsumerResult<bool> = conn.is_still_mine(key, group, consumer, id);
+        let result: RedsumerResult<(
+            bool,
+            Option<LastDeliveredMilliseconds>,
+            Option<TotalTimesDelivered>,
+        )> = conn.is_still_mine(key, group, consumer, id);
 
         // Verify the result:
         assert!(result.is_ok());
-        assert!(!result.unwrap());
+
+        let reply: (
+            bool,
+            Option<LastDeliveredMilliseconds>,
+            Option<TotalTimesDelivered>,
+        ) = result.unwrap();
+
+        assert!(!reply.0);
+        assert!(reply.1.is_none());
+        assert!(reply.2.is_none());
     }
 
     #[test]
@@ -1257,7 +1285,11 @@ mod test_if_is_still_mine {
             )]);
 
         // Verify if the message is still in the consumer pending list:
-        let result: RedsumerResult<bool> = conn.is_still_mine(key, group, consumer, "1-0");
+        let result: RedsumerResult<(
+            bool,
+            Option<LastDeliveredMilliseconds>,
+            Option<TotalTimesDelivered>,
+        )> = conn.is_still_mine(key, group, consumer, "1-0");
 
         // Verify the result:
         assert!(result.is_err());
