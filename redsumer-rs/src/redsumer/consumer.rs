@@ -9,7 +9,7 @@ use crate::core::{
     result::{RedsumerError, RedsumerResult},
     streams::{
         consumer::{ConsumerCommands, BEGINNING_OF_TIME_ID},
-        types::Id,
+        types::{Id, LastDeliveredMilliseconds, TotalTimesDelivered},
     },
 };
 
@@ -215,6 +215,58 @@ impl ConsumerConfig {
     }
 }
 
+/// A reply to verify if a specific message is still in consumer pending list.
+pub struct IsStillMineReply {
+    /// A boolean value indicating if the message is still in consumer pending list.
+    is_still_mine: bool,
+
+    /// The total time in milliseconds that elapsed since the last message was delivered to the consumer.
+    last_delivered_milliseconds: Option<LastDeliveredMilliseconds>,
+
+    /// The total number of times that a message was delivered to any consumer in the group.
+    total_times_delivered: Option<TotalTimesDelivered>,
+}
+
+impl IsStillMineReply {
+    /// Get **is still mine**.
+    pub fn get_is_still_mine(&self) -> bool {
+        self.is_still_mine
+    }
+
+    /// Get **last delivered milliseconds**.
+    pub fn get_last_delivered_milliseconds(&self) -> Option<LastDeliveredMilliseconds> {
+        self.last_delivered_milliseconds
+    }
+
+    /// Get **total times delivered**.
+    pub fn get_total_times_delivered(&self) -> Option<TotalTimesDelivered> {
+        self.total_times_delivered
+    }
+}
+
+/// Convert a tuple into a [`IsStillMineReply`] instance.
+impl
+    From<(
+        bool,
+        Option<LastDeliveredMilliseconds>,
+        Option<TotalTimesDelivered>,
+    )> for IsStillMineReply
+{
+    fn from(
+        (is_still_mine, last_delivered_milliseconds, total_times_delivered): (
+            bool,
+            Option<LastDeliveredMilliseconds>,
+            Option<TotalTimesDelivered>,
+        ),
+    ) -> Self {
+        IsStillMineReply {
+            is_still_mine,
+            last_delivered_milliseconds,
+            total_times_delivered,
+        }
+    }
+}
+
 /// A consumer implementation of Redis Streams. The consumer is responsible for consuming messages from a stream. It can read new messages,  pending messages or claim messages from other consumers according to their min idle time.
 #[derive(Debug, Clone)]
 pub struct Consumer {
@@ -390,13 +442,16 @@ impl Consumer {
     ///
     ///  # Returns:
     ///  - A [`RedsumerResult`] containing a boolean value. If the message is still in consumer pending list, `true` is returned. Otherwise, `false` is returned. If an error occurs, a [`RedsumerError`] is returned.
-    pub fn is_still_mine(&self, id: &Id) -> RedsumerResult<bool> {
-        self.get_client().to_owned().is_still_mine(
-            self.get_config().get_stream_name(),
-            self.get_config().get_group_name(),
-            self.get_config().get_consumer_name(),
-            id,
-        )
+    pub fn is_still_mine(&self, id: &Id) -> RedsumerResult<IsStillMineReply> {
+        self.get_client()
+            .to_owned()
+            .is_still_mine(
+                self.get_config().get_stream_name(),
+                self.get_config().get_group_name(),
+                self.get_config().get_consumer_name(),
+                id,
+            )
+            .map(IsStillMineReply::from)
     }
 
     /// Ack a message by *id*.
