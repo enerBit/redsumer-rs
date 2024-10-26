@@ -312,7 +312,7 @@ pub struct IsStillMineReply {
 
 impl IsStillMineReply {
     /// Get **is still mine**.
-    pub fn get_is_still_mine(&self) -> bool {
+    pub fn is_still_mine(&self) -> bool {
         self.is_still_mine
     }
 
