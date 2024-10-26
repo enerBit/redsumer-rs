@@ -4,6 +4,9 @@ fmt:
 fmt-check:
 	cargo fmt --all --check
 
+check:
+	cargo check --all-features
+
 clippy-check:
 	cargo clippy --all-features
 
