@@ -36,6 +36,26 @@ impl ProducerConfig {
     }
 }
 
+/// Reply of a produced message in a stream.
+pub struct ProduceMessageReply {
+    /// *ID* of the produced message.
+    id: Id,
+}
+
+impl ProduceMessageReply {
+    /// Get *ID* of the produced message.
+    pub fn get_id(&self) -> &Id {
+        &self.id
+    }
+}
+
+/// Convert a `ID` to a [`ProduceMessageReply`] instance.
+impl From<Id> for ProduceMessageReply {
+    fn from(id: Id) -> Self {
+        ProduceMessageReply { id }
+    }
+}
+
 /// A producer implementation of Redis Streams. This struct is responsible for producing messages in a stream.
 #[derive(Debug, Clone)]
 pub struct Producer {
@@ -99,13 +119,14 @@ impl Producer {
     ///
     ///  # Returns:
     /// - A [`RedsumerResult`] with the *ID* of the produced message. Otherwise, a [`RedsumerError`] is returned.
-    pub async fn produce_from_map<M>(&self, map: M) -> RedsumerResult<Id>
+    pub async fn produce_from_map<M>(&self, map: M) -> RedsumerResult<ProduceMessageReply>
     where
         M: ToRedisArgs,
     {
         self.get_client()
             .to_owned()
             .produce_from_map(self.get_config().get_stream_name(), map)
+            .map(ProduceMessageReply::from)
     }
 
     /// Produce a new message in the stream from a list of items.
@@ -117,7 +138,10 @@ impl Producer {
     ///
     /// # Returns:
     /// - A [`RedsumerResult`] with the *ID* of the produced message. Otherwise, a [`RedsumerError`] is returned.
-    pub async fn produce_from_items<F, V>(&self, items: Vec<(F, V)>) -> RedsumerResult<Id>
+    pub async fn produce_from_items<F, V>(
+        &self,
+        items: Vec<(F, V)>,
+    ) -> RedsumerResult<ProduceMessageReply>
     where
         F: ToRedisArgs,
         V: ToRedisArgs,
@@ -125,5 +149,6 @@ impl Producer {
         self.get_client()
             .to_owned()
             .produce_from_items(self.get_config().get_stream_name(), items.as_slice())
+            .map(ProduceMessageReply::from)
     }
 }
