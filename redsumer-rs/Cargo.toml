@@ -20,8 +20,8 @@ authors = [
 ]
 
 [dependencies]
-redis = { version = "0.27.2", features = ["tokio-comp", "streams"] }
-tracing = { version = "0.1.40" }
+redis = { version = ">=0.27.2", features = ["tokio-comp", "streams"] }
+tracing = { version = ">=0.1.40" }
 
 [dev-dependencies]
 redis-test = { version = "0.6.0" }

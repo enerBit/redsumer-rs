@@ -1,5 +1,21 @@
 # redsumer-rs
 
+<div align="left">
+	<img src="https://img.shields.io/github/license/enerBit/redsumer-rs">
+	<a href="https://deps.rs/repo/github/enerBit/redsumer-rs">
+		<img src="https://deps.rs/repo/github/enerBit/redsumer-rs/status.svg">
+	</a>
+	<a href="https://github.com/enerBit/redsumer-rs/actions/workflows/CI.yml">
+		<img src="https://github.com/enerBit/redsumer-rs/actions/workflows/CI.yml/badge.svg">
+	</a>
+	<a href="https://crates.io/crates/redsumer">
+		<img src="https://img.shields.io/crates/v/redsumer.svg?label=crates.io&color=orange&logo=rust">
+	</a>
+	<a href="http://docs.rs/redsumer/latest/">
+		<img src="https://img.shields.io/static/v1?label=docs.rs&message=latest&color=blue&logo=docsdotrs">
+	</a>
+</div>
+
 A lightweight implementation of Redis Streams for Rust, allowing you to manage streaming messages in a simplified way. With redsumer you can:
 
 - **Produce** new messages in a specific *stream*.
