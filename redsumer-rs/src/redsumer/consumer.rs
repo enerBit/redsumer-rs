@@ -216,6 +216,7 @@ impl ConsumerConfig {
 }
 
 /// Define the kind of messages that were consumed by a specific consumer.
+#[derive(Debug, Clone)]
 enum MessagesKind {
     /// The messages were obtained from the new messages list and have not been delivered before to any consumer.
     New,
@@ -253,6 +254,7 @@ impl MessagesKind {
 }
 
 /// A reply to consume messages from a Redis stream. It contains a list of stream IDs and the kind of messages.
+#[derive(Debug, Clone)]
 pub struct ConsumeMessagesReply {
     /// A list of stream IDs.
     messages: Vec<StreamId>,
@@ -296,6 +298,7 @@ impl From<(Vec<StreamId>, MessagesKind)> for ConsumeMessagesReply {
 }
 
 /// A reply to verify if a specific message is still in consumer pending list.
+#[derive(Debug, Clone)]
 pub struct IsStillMineReply {
     /// A boolean value indicating if the message is still in consumer pending list.
     is_still_mine: bool,
@@ -348,6 +351,7 @@ impl
 }
 
 /// A reply to ack a specific message.
+#[derive(Debug, Clone)]
 pub struct AckMessageReply {
     /// A boolean value indicating if the message is acked.
     was_acked: bool,
@@ -546,7 +550,7 @@ impl Consumer {
     /// - **id**: Stream message id.
     ///
     ///  # Returns:
-    ///  - A [`RedsumerResult`] containing a boolean value. If the message is still in consumer pending list, `true` is returned. Otherwise, `false` is returned. If an error occurs, a [`RedsumerError`] is returned.
+    ///  - A [`RedsumerResult`] containing a [`IsStillMineReply`] if successful. If an error occurs, a [`RedsumerError`] is returned.
     pub fn is_still_mine(&self, id: &Id) -> RedsumerResult<IsStillMineReply> {
         self.get_client()
             .to_owned()
@@ -567,7 +571,7 @@ impl Consumer {
     /// - **id**: Stream message id.
     ///
     /// # Returns:
-    ///  - A [`RedsumerResult`] containing a boolean value. If the message is acked, `true` is returned. Otherwise, `false` is returned. If an error occurs, a [`RedsumerError`] is returned.
+    ///  - A [`RedsumerResult`] containing a [`AckMessageReply`] if successful. If an error occurs, a [`RedsumerError`] is returned.
     pub async fn ack(&self, id: &Id) -> RedsumerResult<AckMessageReply> {
         self.get_client()
             .to_owned()
