@@ -33,6 +33,8 @@ jobs:
         run: cargo clippy --all-features
 
       - name: Run project tests
+        env:
+          RUST_LOG: warn
         run: cargo test --verbose
 
       - name: Run tests with coverage for all features
