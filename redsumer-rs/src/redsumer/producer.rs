@@ -153,3 +153,37 @@ impl Producer {
             .map(ProduceMessageReply::from)
     }
 }
+
+#[cfg(test)]
+mod test_producer_config {
+    use super::*;
+
+    #[test]
+    fn test_producer_config_new() {
+        // Define the stream name.
+        let stream_name: &str = "stream_name";
+
+        // Create a new producer configuration.
+        let config: ProducerConfig = ProducerConfig::new(stream_name);
+
+        // Verify the result.
+        assert_eq!(config.get_stream_name(), stream_name);
+    }
+}
+
+#[cfg(test)]
+mod test_produce_messages_reply {
+    use super::*;
+
+    #[test]
+    fn test_produce_message_reply_from() {
+        // Define the message ID.
+        let id: Id = "1234567890".to_string();
+
+        // Create a new produce message reply.
+        let reply: ProduceMessageReply = ProduceMessageReply::from(id.to_owned());
+
+        // Verify the result.
+        assert_eq!(reply.get_id(), &id);
+    }
+}
