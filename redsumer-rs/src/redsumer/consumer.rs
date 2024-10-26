@@ -267,6 +267,26 @@ impl
     }
 }
 
+/// A reply to ack a specific message.
+pub struct AckMessageReply {
+    /// A boolean value indicating if the message is acked.
+    was_acked: bool,
+}
+
+impl AckMessageReply {
+    /// Get **was acked**. If the message was not acked, it is recommended to verify if another consumer has claimed the message before trying to process it again.
+    pub fn was_acked(&self) -> bool {
+        self.was_acked
+    }
+}
+
+/// Convert a boolean value into a [`AckMessageReply`] instance.
+impl From<bool> for AckMessageReply {
+    fn from(was_acked: bool) -> Self {
+        AckMessageReply { was_acked }
+    }
+}
+
 /// A consumer implementation of Redis Streams. The consumer is responsible for consuming messages from a stream. It can read new messages,  pending messages or claim messages from other consumers according to their min idle time.
 #[derive(Debug, Clone)]
 pub struct Consumer {
@@ -463,11 +483,14 @@ impl Consumer {
     ///
     /// # Returns:
     ///  - A [`RedsumerResult`] containing a boolean value. If the message is acked, `true` is returned. Otherwise, `false` is returned. If an error occurs, a [`RedsumerError`] is returned.
-    pub async fn ack(&self, id: &Id) -> RedsumerResult<bool> {
-        self.get_client().to_owned().ack(
-            self.get_config().get_stream_name(),
-            self.get_config().get_group_name(),
-            &[id],
-        )
+    pub async fn ack(&self, id: &Id) -> RedsumerResult<AckMessageReply> {
+        self.get_client()
+            .to_owned()
+            .ack(
+                self.get_config().get_stream_name(),
+                self.get_config().get_group_name(),
+                &[id],
+            )
+            .map(AckMessageReply::from)
     }
 }
