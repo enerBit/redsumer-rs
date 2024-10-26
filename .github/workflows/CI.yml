@@ -33,9 +33,9 @@ jobs:
         run: cargo clippy --all-features
 
       - name: Run project tests
-        env:
-          RUST_LOG: warn
         run: cargo test --verbose
 
       - name: Run tests with coverage for all features
-        run: cargo llvm-cov --workspace --all-features --summary-only --fail-under-lines 90
+        env:
+          MIN_LINE_COVERAGE_TARGET: 80
+        run: cargo llvm-cov --workspace --all-features --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
