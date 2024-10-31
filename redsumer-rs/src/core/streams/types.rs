@@ -6,3 +6,9 @@ pub type LatestPendingMessageId = Id;
 
 /// Represents the next message ID to claim. It is used to the claim messages operation.
 pub type NextIdToClaim = Id;
+
+/// Represents the total time in milliseconds that elapsed since the last message was delivered to the consumer.
+pub type LastDeliveredMilliseconds = usize;
+
+/// Represents the total number of times that a message was delivered to any consumer in the group.
+pub type TotalTimesDelivered = usize;

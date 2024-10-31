@@ -6,49 +6,37 @@ on:
   pull_request:
     branches: [ "main" ]
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  build:
+  CI:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Install Rust
+      - name: "Setup: Install Rust"
         uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
         with:
           components: llvm-tools-preview
 
-      - name: Install cargo-llvm-cov
+      - name: "Setup: Install cargo-llvm-cov"
         uses: taiki-e/install-action@v2.33.22
         with:
           tool: cargo-llvm-cov
 
-      - name: Build project
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build
         run: cargo build --verbose
 
-      - name: Verify project formatting
-        run: cargo fmt --all --check
+      - name: Format
+        run: cargo fmt --package redsumer --all --check
 
-      - name: Check for possible errors and coding suggestions
-        run: cargo clippy --all-features
+      - name: Lints
+        run: cargo clippy --package redsumer --all-features --verbose
 
-      - name: Run project tests
+      - name: Unit Tests
+        run: cargo test --package redsumer --verbose
+
+      - name: Coverage
         env:
-          RUST_LOG: warn
-        run: cargo test --verbose
-
-      - name: Run tests with coverage for all features
-        env:
-          RUST_LOG: warn
-        run: cargo llvm-cov --workspace --all-features --codecov --output-path codecov.json
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4.3.1
-        with:
-          files: codecov.json
-          fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          MIN_LINE_COVERAGE_TARGET: 80
+        run: cargo llvm-cov --package redsumer --all-features --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}

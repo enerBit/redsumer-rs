@@ -36,6 +36,27 @@ impl ProducerConfig {
     }
 }
 
+/// Reply of a produced message in a stream.
+#[derive(Debug, Clone)]
+pub struct ProduceMessageReply {
+    /// *ID* of the produced message.
+    id: Id,
+}
+
+impl ProduceMessageReply {
+    /// Get *ID* of the produced message.
+    pub fn get_id(&self) -> &Id {
+        &self.id
+    }
+}
+
+/// Convert a `ID` to a [`ProduceMessageReply`] instance.
+impl From<Id> for ProduceMessageReply {
+    fn from(id: Id) -> Self {
+        ProduceMessageReply { id }
+    }
+}
+
 /// A producer implementation of Redis Streams. This struct is responsible for producing messages in a stream.
 #[derive(Debug, Clone)]
 pub struct Producer {
@@ -98,14 +119,15 @@ impl Producer {
     /// - **map**: A map with the message to be produced. It must implement the [`ToRedisArgs`] trait.
     ///
     ///  # Returns:
-    /// - A [`RedsumerResult`] with the *ID* of the produced message. Otherwise, a [`RedsumerError`] is returned.
-    pub async fn produce_from_map<M>(&self, map: M) -> RedsumerResult<Id>
+    /// - A [`RedsumerResult`] with a [`ProduceMessageReply`] instance. Otherwise, a [`RedsumerError`] is returned.
+    pub async fn produce_from_map<M>(&self, map: M) -> RedsumerResult<ProduceMessageReply>
     where
         M: ToRedisArgs,
     {
         self.get_client()
             .to_owned()
             .produce_from_map(self.get_config().get_stream_name(), map)
+            .map(ProduceMessageReply::from)
     }
 
     /// Produce a new message in the stream from a list of items.
@@ -116,8 +138,11 @@ impl Producer {
     /// - **items**: A list of items with the message to be produced. Each item is a tuple with the field and the value. Both must implement the [`ToRedisArgs`] trait.
     ///
     /// # Returns:
-    /// - A [`RedsumerResult`] with the *ID* of the produced message. Otherwise, a [`RedsumerError`] is returned.
-    pub async fn produce_from_items<F, V>(&self, items: Vec<(F, V)>) -> RedsumerResult<Id>
+    /// - A [`RedsumerResult`] with a [`ProduceMessageReply`] instance. Otherwise, a [`RedsumerError`] is returned.
+    pub async fn produce_from_items<F, V>(
+        &self,
+        items: Vec<(F, V)>,
+    ) -> RedsumerResult<ProduceMessageReply>
     where
         F: ToRedisArgs,
         V: ToRedisArgs,
@@ -125,5 +150,40 @@ impl Producer {
         self.get_client()
             .to_owned()
             .produce_from_items(self.get_config().get_stream_name(), items.as_slice())
+            .map(ProduceMessageReply::from)
+    }
+}
+
+#[cfg(test)]
+mod test_producer_config {
+    use super::*;
+
+    #[test]
+    fn test_producer_config_new() {
+        // Define the stream name.
+        let stream_name: &str = "stream_name";
+
+        // Create a new producer configuration.
+        let config: ProducerConfig = ProducerConfig::new(stream_name);
+
+        // Verify the result.
+        assert_eq!(config.get_stream_name(), stream_name);
+    }
+}
+
+#[cfg(test)]
+mod test_produce_messages_reply {
+    use super::*;
+
+    #[test]
+    fn test_produce_message_reply_from() {
+        // Define the message ID.
+        let id: Id = "1234567890".to_string();
+
+        // Create a new produce message reply.
+        let reply: ProduceMessageReply = ProduceMessageReply::from(id.to_owned());
+
+        // Verify the result.
+        assert_eq!(reply.get_id(), &id);
     }
 }

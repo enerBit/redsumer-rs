@@ -9,7 +9,7 @@ use crate::core::{
     result::{RedsumerError, RedsumerResult},
     streams::{
         consumer::{ConsumerCommands, BEGINNING_OF_TIME_ID},
-        types::Id,
+        types::{Id, LastDeliveredMilliseconds, TotalTimesDelivered},
     },
 };
 
@@ -215,6 +215,162 @@ impl ConsumerConfig {
     }
 }
 
+/// Define the kind of messages that were consumed by a specific consumer.
+#[derive(Debug, Clone)]
+enum MessagesKind {
+    /// The messages were obtained from the new messages list and have not been delivered before to any consumer.
+    New,
+
+    /// The messages were read from the consumer pending list. They were delivered to a consumer before, but they were not acked yet and they were not claimed by another consumer.
+    Pending,
+
+    /// The messages were claimed by another consumer and they were not acked yet.
+    Claimed,
+
+    /// Messages were not obtained from stream. It means that there are no new, pending or claimed messages to be processed by a consumer in the specified group.
+    NotFound,
+}
+
+impl MessagesKind {
+    /// Check if the messages are new.
+    fn are_new(&self) -> bool {
+        matches!(self, MessagesKind::New)
+    }
+
+    /// Check if the messages are pending.
+    fn are_pending(&self) -> bool {
+        matches!(self, MessagesKind::Pending)
+    }
+
+    /// Check if the messages were claimed.
+    fn were_claimed(&self) -> bool {
+        matches!(self, MessagesKind::Claimed)
+    }
+
+    /// Check if the messages were not found.
+    fn not_found(&self) -> bool {
+        matches!(self, MessagesKind::NotFound)
+    }
+}
+
+/// A reply to consume messages from a Redis stream. It contains a list of stream IDs and the kind of messages.
+#[derive(Debug, Clone)]
+pub struct ConsumeMessagesReply {
+    /// A list of stream IDs.
+    messages: Vec<StreamId>,
+
+    /// The kind of messages.
+    kind: MessagesKind,
+}
+
+impl ConsumeMessagesReply {
+    /// Get **messages**.
+    pub fn get_messages(&self) -> &Vec<StreamId> {
+        &self.messages
+    }
+
+    /// Verify if the messages are new.
+    pub fn are_new(&self) -> bool {
+        self.kind.are_new()
+    }
+
+    /// Verify if the messages are pending in the consumer pending list.
+    pub fn are_pending(&self) -> bool {
+        self.kind.are_pending()
+    }
+
+    /// Verify if the messages were claimed by another consumer.
+    pub fn were_claimed(&self) -> bool {
+        self.kind.were_claimed()
+    }
+
+    /// Verify if the messages were not found.
+    pub fn not_found(&self) -> bool {
+        self.kind.not_found()
+    }
+}
+
+/// Convert a tuple into a [`ConsumeMessagesReply`] instance.
+impl From<(Vec<StreamId>, MessagesKind)> for ConsumeMessagesReply {
+    fn from((messages, kind): (Vec<StreamId>, MessagesKind)) -> Self {
+        ConsumeMessagesReply { messages, kind }
+    }
+}
+
+/// A reply to verify if a specific message is still in consumer pending list.
+#[derive(Debug, Clone)]
+pub struct IsStillMineReply {
+    /// A boolean value indicating if the message is still in consumer pending list.
+    is_still_mine: bool,
+
+    /// The total time in milliseconds that elapsed since the last message was delivered to the consumer.
+    last_delivered_milliseconds: Option<LastDeliveredMilliseconds>,
+
+    /// The total number of times that a message was delivered to any consumer in the group.
+    total_times_delivered: Option<TotalTimesDelivered>,
+}
+
+impl IsStillMineReply {
+    /// Get **is still mine**.
+    pub fn is_still_mine(&self) -> bool {
+        self.is_still_mine
+    }
+
+    /// Get **last delivered milliseconds**.
+    pub fn get_last_delivered_milliseconds(&self) -> Option<LastDeliveredMilliseconds> {
+        self.last_delivered_milliseconds
+    }
+
+    /// Get **total times delivered**.
+    pub fn get_total_times_delivered(&self) -> Option<TotalTimesDelivered> {
+        self.total_times_delivered
+    }
+}
+
+/// Convert a tuple into a [`IsStillMineReply`] instance.
+impl
+    From<(
+        bool,
+        Option<LastDeliveredMilliseconds>,
+        Option<TotalTimesDelivered>,
+    )> for IsStillMineReply
+{
+    fn from(
+        (is_still_mine, last_delivered_milliseconds, total_times_delivered): (
+            bool,
+            Option<LastDeliveredMilliseconds>,
+            Option<TotalTimesDelivered>,
+        ),
+    ) -> Self {
+        IsStillMineReply {
+            is_still_mine,
+            last_delivered_milliseconds,
+            total_times_delivered,
+        }
+    }
+}
+
+/// A reply to ack a specific message.
+#[derive(Debug, Clone)]
+pub struct AckMessageReply {
+    /// A boolean value indicating if the message is acked.
+    was_acked: bool,
+}
+
+impl AckMessageReply {
+    /// Get **was acked**. If the message was not acked, it is recommended to verify if another consumer has claimed the message before trying to process it again.
+    pub fn was_acked(&self) -> bool {
+        self.was_acked
+    }
+}
+
+/// Convert a boolean value into a [`AckMessageReply`] instance.
+impl From<bool> for AckMessageReply {
+    fn from(was_acked: bool) -> Self {
+        AckMessageReply { was_acked }
+    }
+}
+
 /// A consumer implementation of Redis Streams. The consumer is responsible for consuming messages from a stream. It can read new messages,  pending messages or claim messages from other consumers according to their min idle time.
 #[derive(Debug, Clone)]
 pub struct Consumer {
@@ -300,8 +456,8 @@ impl Consumer {
     ///  *No arguments*
     ///
     ///  # Returns:
-    ///  - A [`RedsumerResult`] containing a list of [`StreamId`] if new, pending or claimed messages are found, otherwise an empty list is returned. If an error occurs, a [`RedsumerError`] is returned.
-    pub async fn consume(&mut self) -> RedsumerResult<Vec<StreamId>> {
+    ///  - A [`RedsumerResult`] containing a list of [`ConsumeMessagesReply`] if new, pending or claimed messages are found, otherwise an empty list is returned. If an error occurs, a [`RedsumerError`] is returned.
+    pub async fn consume(&mut self) -> RedsumerResult<ConsumeMessagesReply> {
         debug!(
             "Consuming messages from stream {}",
             self.get_config().get_stream_name()
@@ -325,10 +481,13 @@ impl Consumer {
         )?;
         if new_messages.len().gt(&0) {
             debug!("Total new messages found: {}", new_messages.len());
-            return Ok(new_messages);
+            return Ok((new_messages, MessagesKind::New).into());
         }
 
-        debug!("Processing pending messages");
+        debug!(
+            "Processing pending messages by: {:?}",
+            self.get_config().get_read_pending_messages_options()
+        );
 
         let (pending_messages, latest_pending_message_id): (Vec<StreamId>, LatestPendingMessageId) =
             self.get_client().to_owned().read_pending_messages(
@@ -348,11 +507,13 @@ impl Consumer {
         self.update_latest_pending_message_id(&latest_pending_message_id);
         if pending_messages.len().gt(&0) {
             debug!("Total pending messages found: {}", pending_messages.len());
-
-            return Ok(pending_messages);
+            return Ok((pending_messages, MessagesKind::Pending).into());
         }
 
-        debug!("Processing claimed messages");
+        debug!(
+            "Processing claimed messages by: {:?}",
+            self.get_config().get_claim_messages_options()
+        );
 
         let (claimed_messages, next_id_to_claim): (Vec<StreamId>, NextIdToClaim) =
             self.get_client().to_owned().claim_pending_messages(
@@ -373,12 +534,12 @@ impl Consumer {
         self.update_next_id_to_claim(&next_id_to_claim);
         if claimed_messages.len().gt(&0) {
             debug!("Total claimed messages found: {}", claimed_messages.len());
-            return Ok(claimed_messages);
+            return Ok((claimed_messages, MessagesKind::Claimed).into());
         }
 
         debug!("No messages found");
 
-        Ok(Vec::new())
+        Ok((Vec::new(), MessagesKind::NotFound).into())
     }
 
     /// Verify if a specific message by *id* is still in consumer pending list.
@@ -389,14 +550,17 @@ impl Consumer {
     /// - **id**: Stream message id.
     ///
     ///  # Returns:
-    ///  - A [`RedsumerResult`] containing a boolean value. If the message is still in consumer pending list, `true` is returned. Otherwise, `false` is returned. If an error occurs, a [`RedsumerError`] is returned.
-    pub fn is_still_mine(&self, id: &Id) -> RedsumerResult<bool> {
-        self.get_client().to_owned().is_still_mine(
-            self.get_config().get_stream_name(),
-            self.get_config().get_group_name(),
-            self.get_config().get_consumer_name(),
-            id,
-        )
+    ///  - A [`RedsumerResult`] containing a [`IsStillMineReply`] if successful. If an error occurs, a [`RedsumerError`] is returned.
+    pub fn is_still_mine(&self, id: &Id) -> RedsumerResult<IsStillMineReply> {
+        self.get_client()
+            .to_owned()
+            .is_still_mine(
+                self.get_config().get_stream_name(),
+                self.get_config().get_group_name(),
+                self.get_config().get_consumer_name(),
+                id,
+            )
+            .map(IsStillMineReply::from)
     }
 
     /// Ack a message by *id*.
@@ -407,12 +571,253 @@ impl Consumer {
     /// - **id**: Stream message id.
     ///
     /// # Returns:
-    ///  - A [`RedsumerResult`] containing a boolean value. If the message is acked, `true` is returned. Otherwise, `false` is returned. If an error occurs, a [`RedsumerError`] is returned.
-    pub async fn ack(&self, id: &Id) -> RedsumerResult<bool> {
-        self.get_client().to_owned().ack(
-            self.get_config().get_stream_name(),
-            self.get_config().get_group_name(),
-            &[id],
-        )
+    ///  - A [`RedsumerResult`] containing a [`AckMessageReply`] if successful. If an error occurs, a [`RedsumerError`] is returned.
+    pub async fn ack(&self, id: &Id) -> RedsumerResult<AckMessageReply> {
+        self.get_client()
+            .to_owned()
+            .ack(
+                self.get_config().get_stream_name(),
+                self.get_config().get_group_name(),
+                &[id],
+            )
+            .map(AckMessageReply::from)
+    }
+}
+
+#[cfg(test)]
+mod test_read_new_messages_options {
+    use crate::prelude::*;
+
+    #[test]
+    fn test_new_read_new_messages_options() {
+        // Define count and block:
+        let count: usize = 10;
+        let block: usize = 3;
+
+        // Create new ReadNewMessagesOptions instance:
+        let options: ReadNewMessagesOptions = ReadNewMessagesOptions::new(count, block);
+
+        // Verify the result:
+        assert_eq!(options.get_count(), count);
+        assert_eq!(options.get_block(), block);
+    }
+}
+
+#[cfg(test)]
+mod test_read_pending_messages_options {
+    use super::BEGINNING_OF_TIME_ID;
+    use crate::prelude::*;
+
+    #[test]
+    fn test_new_read_pending_messages_options() {
+        // Define count:
+        let count: usize = 10;
+
+        // Create new ReadPendingMessagesOptions instance:
+        let options: ReadPendingMessagesOptions = ReadPendingMessagesOptions::new(count);
+
+        // Verify the result:
+        assert_eq!(options.get_count(), count);
+        assert_eq!(
+            options.get_latest_pending_message_id(),
+            BEGINNING_OF_TIME_ID
+        );
+    }
+}
+
+#[cfg(test)]
+mod test_claim_messages_options {
+    use super::BEGINNING_OF_TIME_ID;
+    use crate::prelude::*;
+
+    #[test]
+    fn test_new_claim_messages_options() {
+        // Define count and min idle time:
+        let count: usize = 10;
+        let min_idle_time: usize = 1000;
+
+        // Create new ClaimMessagesOptions instance:
+        let options: ClaimMessagesOptions = ClaimMessagesOptions::new(count, min_idle_time);
+
+        // Verify the result:
+        assert_eq!(options.get_count(), count);
+        assert_eq!(options.get_min_idle_time(), min_idle_time);
+        assert_eq!(options.get_next_id_to_claim(), BEGINNING_OF_TIME_ID);
+    }
+}
+
+#[cfg(test)]
+mod test_consumer_config {
+    use super::BEGINNING_OF_TIME_ID;
+    use crate::prelude::*;
+
+    #[test]
+    fn test_new_consumer_config() {
+        // Define stream name, group name and consumer name:
+        let stream_name: &str = "stream";
+        let group_name: &str = "group";
+        let consumer_name: &str = "consumer";
+
+        // Define count, block, min idle time and initial stream id:
+        let count: usize = 10;
+        let block: usize = 3;
+        let min_idle_time: usize = 1000;
+
+        // Create new ReadNewMessagesOptions instance:
+        let read_new_messages_options: ReadNewMessagesOptions =
+            ReadNewMessagesOptions::new(count, block);
+
+        // Create new ReadPendingMessagesOptions instance:
+        let read_pending_messages_options: ReadPendingMessagesOptions =
+            ReadPendingMessagesOptions::new(count);
+
+        // Create new ClaimMessagesOptions instance:
+        let claim_messages_options: ClaimMessagesOptions =
+            ClaimMessagesOptions::new(count, min_idle_time);
+
+        // Create new ConsumerConfig instance:
+        let config: ConsumerConfig = ConsumerConfig::new(
+            stream_name,
+            group_name,
+            consumer_name,
+            read_new_messages_options,
+            read_pending_messages_options,
+            claim_messages_options,
+        );
+
+        // Verify the result:
+        assert_eq!(config.get_stream_name(), stream_name);
+        assert_eq!(config.get_group_name(), group_name);
+        assert_eq!(config.get_consumer_name(), consumer_name);
+
+        assert_eq!(config.get_read_new_messages_options().get_count(), count);
+        assert_eq!(config.get_read_new_messages_options().get_block(), block);
+
+        assert_eq!(
+            config.get_read_pending_messages_options().get_count(),
+            count
+        );
+        assert_eq!(
+            config
+                .get_read_pending_messages_options()
+                .get_latest_pending_message_id(),
+            BEGINNING_OF_TIME_ID
+        );
+
+        assert_eq!(config.get_claim_messages_options().get_count(), count);
+        assert_eq!(
+            config.get_claim_messages_options().get_min_idle_time(),
+            min_idle_time
+        );
+        assert_eq!(
+            config.get_claim_messages_options().get_next_id_to_claim(),
+            BEGINNING_OF_TIME_ID
+        );
+    }
+}
+
+#[cfg(test)]
+mod test_messages_kind {
+    use super::MessagesKind;
+
+    #[test]
+    fn test_messages_kind() {
+        // Create new MessagesKind instances:
+        let new_messages: MessagesKind = MessagesKind::New;
+        let pending_messages: MessagesKind = MessagesKind::Pending;
+        let claimed_messages: MessagesKind = MessagesKind::Claimed;
+        let not_found_messages: MessagesKind = MessagesKind::NotFound;
+
+        // Verify the result:
+        assert!(new_messages.are_new());
+        assert!(!new_messages.are_pending());
+        assert!(!new_messages.were_claimed());
+        assert!(!new_messages.not_found());
+
+        assert!(!pending_messages.are_new());
+        assert!(pending_messages.are_pending());
+        assert!(!pending_messages.were_claimed());
+        assert!(!pending_messages.not_found());
+
+        assert!(!claimed_messages.are_new());
+        assert!(!claimed_messages.are_pending());
+        assert!(claimed_messages.were_claimed());
+        assert!(!claimed_messages.not_found());
+
+        assert!(!not_found_messages.are_new());
+        assert!(!not_found_messages.are_pending());
+        assert!(!not_found_messages.were_claimed());
+        assert!(not_found_messages.not_found());
+    }
+}
+
+#[cfg(test)]
+mod test_consume_messages_reply {
+    use super::MessagesKind;
+    use crate::prelude::*;
+
+    #[test]
+    fn test_consume_messages_reply() {
+        // Define messages and kind:
+        let messages: Vec<StreamId> = vec![StreamId::default()];
+        let kind: MessagesKind = MessagesKind::New;
+
+        // Create new ConsumeMessagesReply instance:
+        let reply: ConsumeMessagesReply = ConsumeMessagesReply::from((messages, kind));
+
+        // Verify the result:
+        assert!(reply.get_messages().len().eq(&1));
+        assert!(reply.are_new());
+        assert!(!reply.are_pending());
+        assert!(!reply.were_claimed());
+        assert!(!reply.not_found());
+    }
+}
+
+#[cfg(test)]
+mod test_is_still_mine_reply {
+    use crate::prelude::*;
+
+    #[test]
+    fn test_is_still_mine_reply() {
+        // Define is still mine, last delivered milliseconds and total times delivered:
+        let is_still_mine: bool = true;
+        let last_delivered_milliseconds: Option<LastDeliveredMilliseconds> = Some(1000);
+        let total_times_delivered: Option<TotalTimesDelivered> = Some(787);
+
+        // Create new IsStillMineReply instance:
+        let reply: IsStillMineReply = IsStillMineReply::from((
+            is_still_mine,
+            last_delivered_milliseconds,
+            total_times_delivered,
+        ));
+
+        // Verify the result:
+        assert!(reply.is_still_mine());
+
+        assert!(reply.get_last_delivered_milliseconds().is_some());
+        assert!(reply
+            .get_last_delivered_milliseconds()
+            .eq(&last_delivered_milliseconds));
+
+        assert!(reply.get_total_times_delivered().is_some());
+        assert!(reply.get_total_times_delivered().eq(&total_times_delivered));
+    }
+}
+
+#[cfg(test)]
+mod test_ack_message_reply {
+    use crate::prelude::*;
+
+    #[test]
+    fn test_ack_message_reply() {
+        // Define was acked:
+        let was_acked: bool = true;
+
+        // Create new AckMessageReply instance:
+        let reply: AckMessageReply = AckMessageReply::from(was_acked);
+
+        // Verify the result:
+        assert!(reply.was_acked());
     }
 }

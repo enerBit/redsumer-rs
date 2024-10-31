@@ -39,11 +39,6 @@ impl ClientCredentials {
     ///
     /// # Returns:
     /// A new instance of [`ClientCredentials`].
-    ///
-    /// ```rust,no_run
-    /// use redsumer::ClientCredentials;
-    /// let credentials = ClientCredentials::new("user", "password");
-    /// ```
     pub fn new(user: &str, password: &str) -> ClientCredentials {
         ClientCredentials {
             user: user.to_owned(),
