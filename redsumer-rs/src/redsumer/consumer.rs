@@ -312,7 +312,13 @@ pub struct IsStillMineReply {
 
 impl IsStillMineReply {
     /// Get **is still mine**.
+    #[deprecated(note = "Please use the `belongs_to_me` function instead")]
     pub fn is_still_mine(&self) -> bool {
+        self.belongs_to_me()
+    }
+
+    /// Verify if the message still belongs to the consumer.
+    pub fn belongs_to_me(&self) -> bool {
         self.is_still_mine
     }
 
@@ -793,7 +799,7 @@ mod test_is_still_mine_reply {
         ));
 
         // Verify the result:
-        assert!(reply.is_still_mine());
+        assert!(reply.belongs_to_me());
 
         assert!(reply.get_last_delivered_milliseconds().is_some());
         assert!(reply

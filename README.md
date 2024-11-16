@@ -170,7 +170,7 @@ async fn main() {
                 panic!(
                     "Error checking if message is still in consumer pending list: {:?}", error
                 );
-            }).is_still_mine() {
+            }).belongs_to_me() {
                 // Process message ...
                 println!("Processing message: {:?}", message);
                 // ...
