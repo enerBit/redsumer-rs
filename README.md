@@ -1,4 +1,4 @@
-# redsumer-rs
+# REDSUMER
 
 <div align="left">
 	<img src="https://img.shields.io/github/license/enerBit/redsumer-rs">
@@ -20,20 +20,6 @@ A lightweight implementation of Redis Streams for Rust, allowing you to manage s
 
 - **Produce** new messages in a specific *stream*.
 - **Consume** messages from specific *stream*, setting config parameters that allow you a flexible implementation. It also provides an option to minimize the possibility of consuming the same message simultaneously by more than one consumers from the same consumer group.
-
-To use ***redsumer*** from GitHub repository with specific version, set the dependency in Cargo.toml file as follows:
-
-```ini
-[dependencies]
-redsumer = { git = "https://github.com/enerBit/redsumer-rs.git", package = "redsumer", version = "0.5.0" }
-```
-
-You can depend on it via cargo by adding the following dependency to your `Cargo.toml` file:
-
-```ini
-[dependencies]
-redsumer = { version = "0.5.0" }
-```
 
 ## Basic Usage
 
