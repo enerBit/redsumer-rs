@@ -34,9 +34,6 @@ jobs:
         run: cargo clippy --package redsumer --all-features --verbose
 
       - name: Unit Tests
-        run: cargo test --package redsumer --verbose
-
-      - name: Coverage
         env:
           MIN_LINE_COVERAGE_TARGET: 80
         run: cargo llvm-cov --package redsumer --all-features --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
