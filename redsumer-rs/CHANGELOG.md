@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ⚡ Implement `belongs_to_me()` in `IsStillMineReply` to verify if the message is still in consumer pending list. Function `is_still_mine()` was deprecated. By [@JMTamayo](https://github.com/JMTamayo).
 
+### Changed:
+
+- 🚀 Unify *Unit Tests* and *Coverage* steps in CI pipeline. By [@JMTamayo](https://github.com/JMTamayo).
+- 🚀 Making the *Checkout* step the first step in the pipeline to ensure that the code is available prior to the execution of the CI flow. By [@JMTamayo](https://github.com/JMTamayo).
+
 ## ✨ v0.5.0 [2024-10-26]
 
 ### Added:

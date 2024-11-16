@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: "Setup: Install Rust"
         uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
         with:
@@ -20,9 +23,6 @@ jobs:
         uses: taiki-e/install-action@v2.33.22
         with:
           tool: cargo-llvm-cov
-
-      - name: Checkout
-        uses: actions/checkout@v3
 
       - name: Build
         run: cargo build --verbose
@@ -34,9 +34,6 @@ jobs:
         run: cargo clippy --package redsumer --all-features --verbose
 
       - name: Unit Tests
-        run: cargo test --package redsumer --verbose
-
-      - name: Coverage
         env:
           MIN_LINE_COVERAGE_TARGET: 80
         run: cargo llvm-cov --package redsumer --all-features --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
