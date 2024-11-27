@@ -5,25 +5,22 @@ fmt-check:
 	cargo fmt --all --check
 
 check:
-	cargo check --all-features
+	cargo check --workspace --all-features
 
 clippy-check:
-	cargo clippy --all-features
+	cargo clippy --workspace --all-features
 
 install-llvm-cov:
 	cargo install cargo-llvm-cov
 
 test-llvm-cov-report:
-	cargo llvm-cov --html --workspace --all-features
+	cargo llvm-cov --workspace --all-features --show-missing-lines --open
 
 test-llvm-cov-target:
-	cargo llvm-cov --workspace --all-features --summary-only --fail-under-lines 70
+	cargo llvm-cov --workspace --all-features --show-missing-lines --summary-only --fail-under-lines 80
 
-test:
-	cargo test --all-features
+test-doc:
+	cargo test --workspace --all-features --doc
 
 doc:
-	cargo doc --all-features
-
-doc-open:
-	cargo doc --all-features --open
+	cargo doc --workspace --all-features --open
