@@ -48,3 +48,12 @@ yamlfmt-check:
 
 verify-project:
 	cargo verify-project --verbose
+
+install-taplo:
+	cargo install taplo-cli
+
+format-toml-files:
+	taplo fmt
+
+toml-files-format-check:
+	taplo fmt --check --verbose  --diff

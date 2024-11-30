@@ -29,6 +29,11 @@ jobs:
           go-version: stable
           cache: false
 
+      - name: Setup Taplo
+        uses: taiki-e/install-action@v2
+        with:
+          tool: taplo-cli
+
       - name: Install yamlfmt
         run: go install github.com/google/yamlfmt/cmd/yamlfmt@latest
 
@@ -37,6 +42,9 @@ jobs:
 
       - name: Verify YAML Files Format
         run: yamlfmt --lint .
+
+      - name: Verify TOML Files Format
+        run: taplo fmt --check --verbose --diff
 
   Build:
     runs-on: ubuntu-latest
