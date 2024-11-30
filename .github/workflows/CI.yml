@@ -10,6 +10,7 @@ env:
   LOG_LEVEL: debug
   CARGO_TERM_COLOR: always
   MIN_LINE_COVERAGE_TARGET: 80
+  CARGO_DENY_CONFIG_FILE_PATH: ./deny.toml
 
 jobs:
   Build:
@@ -74,4 +75,4 @@ jobs:
         uses: EmbarkStudios/cargo-deny-action@v1
 
       - name: Security Analysis
-        run: cargo deny --log-level ${{ env.LOG_LEVEL }} check 
+        run: cargo deny --log-level ${{ env.LOG_LEVEL }} check --config ${{ env.CARGO_DENY_CONFIG_FILE_PATH }}

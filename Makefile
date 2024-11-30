@@ -29,7 +29,7 @@ install-cargo-deny:
 	cargo install cargo-deny
 
 deny-check:
-	cargo deny --log-level debug check
+	cargo deny --log-level debug check --config ./deny.toml
 
 test-doc:
 	cargo test --workspace --all-features --doc
