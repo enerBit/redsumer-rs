@@ -19,6 +19,12 @@ test-llvm-cov-report:
 test-llvm-cov-target:
 	cargo llvm-cov --workspace --all-features --show-missing-lines --summary-only --fail-under-lines 80
 
+install-cargo-audit:
+	cargo install cargo-audit
+
+security-audit:
+	cargo audit --json
+
 test-doc:
 	cargo test --workspace --all-features --doc
 
