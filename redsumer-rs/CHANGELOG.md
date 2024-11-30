@@ -5,7 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## ✨ v0.5.2 [*Pending*]
+
+### Added:
+
+- ⚡ Implement `cargo-deny` in CI pipeline to verify security vulnerabilities. By [@JMTamayo](https://github.com/JMTamayo).
+- ⚡ Implement `cargo-audit` and `cargo-deny` in Makefile. By [@JMTamayo](https://github.com/JMTamayo).
+
+### Changed:
+
+- 🚀 Refactor the CI pipeline to split the process into the following steps: Build, Documentation, Tests and Security. By [@JMTamayo](https://github.com/JMTamayo).
+
+## ✨ v0.5.1 [2024-11-27]
 
 ### Added:
 

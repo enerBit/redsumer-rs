@@ -6,26 +6,22 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  LOG_LEVEL: debug
+  CARGO_TERM_COLOR: always
+  MIN_LINE_COVERAGE_TARGET: 80
+
 jobs:
-  CI:
+  Build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Fetch Repository
+        uses: actions/checkout@v4
 
-      - name: "Setup: Install Rust"
-        uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          components: llvm-tools-preview
-
-      - name: "Setup: Install cargo-llvm-cov"
-        uses: taiki-e/install-action@v2.33.22
-        with:
-          tool: cargo-llvm-cov
-
-      - name: Build
-        run: cargo build --workspace --all-features
+          components: rustfmt, clippy
 
       - name: Format
         run: cargo fmt --all --check
@@ -33,10 +29,46 @@ jobs:
       - name: Lints
         run: cargo clippy --workspace --all-features
 
-      - name: Unit Tests
-        env:
-          MIN_LINE_COVERAGE_TARGET: 80
-        run: cargo llvm-cov --workspace --all-features --show-missing-lines --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
+      - name: Build
+        run: cargo build --workspace --all-features
+
+  Documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Build Crate Doc
+        run: cargo doc --workspace --all-features --document-private-items --verbose
 
       - name: Doc Tests
         run: cargo test --workspace --all-features --doc
+
+  Tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v4
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2.33.22
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Unit & Integration Tests
+        run: cargo llvm-cov --workspace --all-features --show-missing-lines --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
+
+  Security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v4
+
+      - name: Security Analysis
+        uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          log-level: ${{ env.LOG_LEVEL }}
+          command: check
