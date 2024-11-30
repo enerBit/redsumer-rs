@@ -19,13 +19,13 @@ pub const BEGINNING_OF_TIME_ID: &str = "0-0";
 
 /// Get StreamIds from a StreamReadReply by key.
 trait UnwrapStreamReadReply<K> {
-    /// Unwrap StreamReadReply by key into a Vec<StreamId>.
+    /// Unwrap StreamReadReply by key into a `Vec<StreamId>`.
     ///
     /// # Arguments:
     /// - **key**: A key to filter the StreamReadReply.
     ///
     /// # Returns:
-    /// A Vec<StreamId> with the StreamIds found.
+    /// A `Vec<StreamId>` with the StreamIds found.
     fn unwrap_by_key(&self, key: &K) -> Vec<StreamId>
     where
         K: ToString;

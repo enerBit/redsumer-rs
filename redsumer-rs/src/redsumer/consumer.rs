@@ -19,7 +19,7 @@ pub struct ReadNewMessagesOptions {
     /// The number of new messages to read from the stream.
     count: usize,
 
-    /// The block time [seconds] to wait for new messages to arrive in the stream.
+    /// The block time in `seconds` to wait for new messages to arrive in the stream.
     block: usize,
 }
 
@@ -90,7 +90,7 @@ pub struct ClaimMessagesOptions {
     /// The number of messages to claim from the stream.
     count: usize,
 
-    /// The min idle time [milliseconds] to claim the messages.
+    /// The min idle time in `milliseconds` to claim the messages.
     min_idle_time: usize,
 
     /// The latest ID to start claiming from.
