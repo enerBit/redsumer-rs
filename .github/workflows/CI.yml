@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   LOG_LEVEL: debug
@@ -12,13 +12,45 @@ env:
   MIN_LINE_COVERAGE_TARGET: 80
 
 jobs:
+  Config-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+
+      - name: Setup Taplo
+        uses: taiki-e/install-action@v2
+        with:
+          tool: taplo-cli
+
+      - name: Install yamlfmt
+        run: go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+
+      - name: Verify Project
+        run: cargo verify-project --verbose
+
+      - name: Verify YAML Files Format
+        run: yamlfmt --lint .
+
+      - name: Verify TOML Files Format
+        run: taplo fmt --check --verbose --diff
+
   Build:
     runs-on: ubuntu-latest
     steps:
       - name: Fetch Repository
         uses: actions/checkout@v4
 
-      - name: Install Rust
+      - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: rustfmt, clippy
@@ -38,7 +70,7 @@ jobs:
       - name: Fetch Repository
         uses: actions/checkout@v4
 
-      - name: Install Rust
+      - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: Build Crate Doc
@@ -53,7 +85,7 @@ jobs:
       - name: Fetch Repository
         uses: actions/checkout@v4
 
-      - name: Install cargo-llvm-cov
+      - name: Setup cargo-llvm-cov
         uses: taiki-e/install-action@v2.33.22
         with:
           tool: cargo-llvm-cov
