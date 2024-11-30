@@ -10,7 +10,7 @@ env:
   LOG_LEVEL: debug
   CARGO_TERM_COLOR: always
   MIN_LINE_COVERAGE_TARGET: 80
-  CARGO_DENY_CONFIG_FILE_PATH: ./deny.toml
+  CARGO_DENY_CONFIG_FILE_PATH: ${{ github.workspace }}/deny.toml
 
 jobs:
   Build:
