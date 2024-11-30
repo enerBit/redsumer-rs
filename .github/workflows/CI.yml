@@ -68,10 +68,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: "Setup: Install Rust"
-        run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-      - name: "Setup: Install cargo-deny"
-        run: cargo deny --log-level ${{ env.LOG_LEVEL }} check
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: deny
 
       - name: Security Audit
-        uses: EmbarkStudios/cargo-deny-action@v1
+        run: cargo deny --log-level ${{ env.LOG_LEVEL }} check
