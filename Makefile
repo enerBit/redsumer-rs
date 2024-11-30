@@ -35,4 +35,4 @@ test-doc:
 	cargo test --workspace --all-features --doc
 
 doc:
-	cargo doc --workspace --all-features --open
+	cargo doc --workspace --all-features --document-private-items --verbose --open
