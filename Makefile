@@ -36,3 +36,15 @@ test-doc:
 
 doc:
 	cargo doc --workspace --all-features --document-private-items --verbose --open
+
+install-yamlfmt:
+	go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+
+yamlfmt:
+	yamlfmt .
+
+yamlfmt-check:
+	yamlfmt --lint .
+
+verify-project:
+	cargo verify-project --verbose
