@@ -6,26 +6,20 @@ on:
   pull_request:
     branches: [ "main" ]
 
-jobs:
-  CI:
-    runs-on: ubuntu-latest
+env:
+  LOG_LEVEL: debug
+  CARGO_TERM_COLOR: always
+  MIN_LINE_COVERAGE_TARGET: 80
 
+jobs:
+  Build:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: "Setup: Install Rust"
-        uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
-        with:
-          components: llvm-tools-preview
-
-      - name: "Setup: Install cargo-llvm-cov"
-        uses: taiki-e/install-action@v2.33.22
-        with:
-          tool: cargo-llvm-cov
-
-      - name: Build
-        run: cargo build --workspace --all-features
+        run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
       - name: Format
         run: cargo fmt --all --check
@@ -33,10 +27,38 @@ jobs:
       - name: Lints
         run: cargo clippy --workspace --all-features
 
-      - name: Unit Tests
-        env:
-          MIN_LINE_COVERAGE_TARGET: 80
-        run: cargo llvm-cov --workspace --all-features --show-missing-lines --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
+      - name: Build
+        run: cargo build --workspace --all-features
+
+  Tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: "Setup: Install Rust"
+        run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+      - name: "Setup: Install cargo-llvm-cov"
+        run: cargo install cargo-llvm-cov
 
       - name: Doc Tests
         run: cargo test --workspace --all-features --doc
+
+      - name: Unit & Integration Tests
+        run: cargo llvm-cov --workspace --all-features --show-missing-lines --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
+
+  Security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: "Setup: Install Rust"
+        run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+      - name: "Setup: Install cargo-deny"
+        run: cargo deny --log-level ${{ env.LOG_LEVEL }} check
+
+      - name: Security Audit
+        uses: EmbarkStudios/cargo-deny-action@v1
