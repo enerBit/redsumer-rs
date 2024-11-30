@@ -15,11 +15,13 @@ jobs:
   Build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: "Setup: Fetch Repository"
         uses: actions/checkout@v4
 
       - name: "Setup: Install Rust"
-        run: sudo apt update | sudo apt install rustc -y
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt, clippy
 
       - name: Format
         run: cargo fmt --all --check
