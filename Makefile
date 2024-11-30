@@ -22,8 +22,14 @@ test-llvm-cov-target:
 install-cargo-audit:
 	cargo install cargo-audit
 
-security-audit:
+audit:
 	cargo audit --json
+
+install-cargo-deny:
+	cargo install cargo-deny
+
+deny-check:
+	cargo deny --log-level debug check
 
 test-doc:
 	cargo test --workspace --all-features --doc
