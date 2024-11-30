@@ -15,10 +15,10 @@ jobs:
   Build:
     runs-on: ubuntu-latest
     steps:
-      - name: "Setup: Fetch Repository"
+      - name: Fetch Repository
         uses: actions/checkout@v4
 
-      - name: "Setup: Install Rust"
+      - name: Install Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: rustfmt, clippy
@@ -47,13 +47,10 @@ jobs:
   Tests:
     runs-on: ubuntu-latest
     steps:
-      - name: "Setup: Fetch Repository"
+      - name: Fetch Repository
         uses: actions/checkout@v4
 
-      - name: "Setup: Install Rust"
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: "Setup: Install cargo-llvm-cov"
+      - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2.33.22
         with:
           tool: cargo-llvm-cov
