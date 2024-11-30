@@ -19,8 +19,20 @@ test-llvm-cov-report:
 test-llvm-cov-target:
 	cargo llvm-cov --workspace --all-features --show-missing-lines --summary-only --fail-under-lines 80
 
+install-cargo-audit:
+	cargo install cargo-audit
+
+audit:
+	cargo audit --json
+
+install-cargo-deny:
+	cargo install cargo-deny
+
+deny-check:
+	cargo deny --log-level debug check
+
 test-doc:
 	cargo test --workspace --all-features --doc
 
 doc:
-	cargo doc --workspace --all-features --open
+	cargo doc --workspace --all-features --document-private-items --verbose --open
