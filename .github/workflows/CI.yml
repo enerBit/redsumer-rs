@@ -80,7 +80,7 @@ jobs:
           tool: cargo-llvm-cov
 
       - name: Unit & Integration Tests
-        run: cargo llvm-cov --workspace --all-features --show-missing-lines --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}		
+        run: cargo llvm-cov --workspace --all-features --show-missing-lines --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
 
   Documentation:
     runs-on: ubuntu-latest
