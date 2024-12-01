@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ⚡ Implement `cargo-deny` in CI pipeline to verify security vulnerabilities. By [@JMTamayo](https://github.com/JMTamayo).
 - ⚡ Implement `cargo verify-project`, `yamlfmt` and `taplo` in CI pipeline to verify config files format. By [@JMTamayo](https://github.com/JMTamayo).
 - ⚡ Implement `cargo-audit`, `cargo-deny`, `cargo verify-project`, `yamlfmt`and `taplo` in Makefile. By [@JMTamayo](https://github.com/JMTamayo).
+- ⚡ Implement scheduled job to run CI pipeline each Sunday at 05:00 UTC. By [@JMTamayo](https://github.com/JMTamayo).
 
 ### Changed:
 
