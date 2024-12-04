@@ -10,14 +10,17 @@ check:
 clippy-check:
 	cargo clippy --workspace --all-features
 
+install-nextest:
+	cargo install cargo-nextest
+
 install-llvm-cov:
 	cargo install cargo-llvm-cov
 
 test-llvm-cov-report:
-	cargo llvm-cov --workspace --all-features --show-missing-lines --open
+	cargo llvm-cov nextest --workspace --all-features --show-missing-lines --open
 
 test-llvm-cov-target:
-	cargo llvm-cov --workspace --all-features --show-missing-lines --summary-only --fail-under-lines 80
+	cargo llvm-cov nextest --workspace --all-features --show-missing-lines --summary-only --fail-under-lines 80
 
 install-cargo-audit:
 	cargo install cargo-audit
