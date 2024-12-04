@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed:
 
 - 🚀 CI pipeline refactor to split the process into the following steps: Project-Config, Docs, Build, Tests and Security. By [@JMTamayo](https://github.com/JMTamayo).
+- 🚀 Implement cargo-nextest to run unit tests alongside llvm-cov. By [@JMTamayo](https://github.com/JMTamayo).
 
 ## ✨ v0.5.1 [2024-11-27]
 

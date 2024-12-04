@@ -93,10 +93,10 @@ jobs:
       - name: Setup cargo-llvm-cov
         uses: taiki-e/install-action@v2.33.22
         with:
-          tool: cargo-llvm-cov
+          tool: cargo-llvm-cov,cargo-nextest
 
       - name: Unit & Integration Tests
-        run: cargo llvm-cov --workspace --all-features --show-missing-lines --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
+        run: cargo llvm-cov nextest --workspace --all-features --show-missing-lines --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
 
   Security:
     runs-on: ubuntu-latest
