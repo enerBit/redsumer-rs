@@ -1,0 +1,15 @@
+[package]
+name = "redsumer-core"
+description = "Lightweight implementation of Redis Streams for Rust"
+version = "0.1.0"
+edition = "2021"
+license-file = "../LICENSE"
+readme = "README.md"
+authors = ["Juan Manuel Tamayo <jmtamayog23@gmail.com>"]
+
+[dependencies]
+redis = { version = ">=0.27.2", features = ["streams"] }
+tracing = { version = ">=0.1.40" }
+
+[dev-dependencies]
+redis-test = { version = "0.6.0" }
