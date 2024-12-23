@@ -32,13 +32,13 @@ jobs:
       - name: "Setup: Install yamlfmt"
         run: go install github.com/google/yamlfmt/cmd/yamlfmt@latest
 
-      - name: Verify YAML Files Format
+      - name: "Step: Verify YAML Files Format"
         run: yamlfmt --lint .
 
-      - name: Verify TOML Files Format
+      - name: "Step: Verify TOML Files Format"
         run: taplo fmt --check --diff --verbose
 
-      - name: Verify Crates Manifest
+      - name: "Step: Verify Crates Manifest"
         run: cargo verify-project --verbose
 
   Security:
@@ -48,7 +48,7 @@ jobs:
       - name: "Repository: Fetch"
         uses: actions/checkout@v4
 
-      - name: "Security: Rust"
+      - name: "Step: Security Analysis For Rust"
         uses: EmbarkStudios/cargo-deny-action@v1
         with:
           command: check
