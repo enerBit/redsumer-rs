@@ -39,7 +39,7 @@ jobs:
         run: taplo fmt --check --diff --verbose
 
       - name: Verify Crates Manifest
-        run: cargo verify-project --check --verbose
+        run: cargo verify-project --verbose
 
   Security:
     runs-on: ubuntu-latest
