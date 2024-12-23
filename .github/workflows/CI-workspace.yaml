@@ -18,7 +18,7 @@ jobs:
       - name: "Setup: Install Rust"
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: "Setup: Go"
+      - name: "Setup: Install Go"
         uses: actions/setup-go@v5
         with:
           go-version: stable
@@ -29,7 +29,7 @@ jobs:
         with:
           tool: taplo-cli
 
-      - name: "Setup: IInstall yamlfmt"
+      - name: "Setup: Install yamlfmt"
         run: go install github.com/google/yamlfmt/cmd/yamlfmt@latest
 
       - name: Verify YAML Files Format
@@ -42,7 +42,7 @@ jobs:
         run: cargo verify-project --verbose
 
   Security:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: Config
     steps:
       - name: "Repository: Fetch"
