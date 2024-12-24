@@ -68,14 +68,14 @@ jobs:
       - name: "Step: Fetch Dependencies"
         run: cargo fetch
 
+      - name: "Step: Build"
+        run: cargo build --package ${{ matrix.crate }} --all-features
+
       - name: "Step: Format"
         run: cargo fmt --package ${{ matrix.crate }} --check
 
       - name: "Step: Lints"
         run: cargo clippy --package ${{ matrix.crate }} --all-features
-
-      - name: "Step: Build"
-        run: cargo build --package ${{ matrix.crate }} --all-features
 
   Docs:
     runs-on: ubuntu-20.04
