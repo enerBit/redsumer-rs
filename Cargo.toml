@@ -1,3 +1,3 @@
 [workspace]
 resolver = "2"
-members = ["redsumer-rs", "redsumer-core"]
+members = ["redsumer-core", "redsumer-rs"]

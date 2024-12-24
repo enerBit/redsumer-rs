@@ -54,7 +54,7 @@ jobs:
       matrix:
         crate:
           - redsumer-core
-          - redsumer-rs
+          - redsumer
 
     steps:
       - name: "Repository: Fetch"
@@ -81,7 +81,7 @@ jobs:
       matrix:
         crate:
           - redsumer-core
-          - redsumer-rs
+          - redsumer
 
     steps:
       - name: "Repository: Fetch"
@@ -103,7 +103,7 @@ jobs:
       matrix:
         crate:
           - redsumer-core
-          - redsumer-rs
+          - redsumer
 
     steps:
       - name: "Repository: Fetch"
@@ -124,7 +124,7 @@ jobs:
       matrix:
         crate:
           - redsumer-core
-          - redsumer-rs
+          - redsumer
 
     steps:
       - name: "Repository: Fetch"
