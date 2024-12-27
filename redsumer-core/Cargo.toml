@@ -1,6 +1,6 @@
 [package]
 name = "redsumer-core"
-description = "Lightweight implementation of Redis Streams for Rust"
+description = "Core functionalities for redsumer written in Rust"
 version = "0.1.0"
 edition = "2021"
 license-file = "../LICENSE"
