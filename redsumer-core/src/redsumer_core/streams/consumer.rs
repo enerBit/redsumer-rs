@@ -82,7 +82,7 @@ where
 }
 
 /// Create a consumer group in a stream.
-/// 
+///
 /// if the consumer group already exists, the function will return a success result with a `false` value. If the consumer group does not exist, the function will create it and return a success result with a `true` value.
 fn create_consumer_group<C, K, G, ID>(
     conn: &mut C,

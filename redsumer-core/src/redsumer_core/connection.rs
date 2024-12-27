@@ -5,7 +5,7 @@ use tracing::{debug, error};
 use crate::redsumer_core::result::{RedsumerError, RedsumerResult};
 
 /// Verify the connection to the server.
-/// 
+///
 /// This method sends a `PING` command to the server to verify the connection and returns `PONG` if the connection was verified successfully.
 fn ping<C>(c: &mut C) -> RedisResult<String>
 where

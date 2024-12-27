@@ -5,7 +5,7 @@ use tracing::{debug, error};
 use crate::redsumer_core::result::{RedsumerError, RedsumerResult};
 
 /// Produce a message to a stream from a map.
-/// 
+///
 /// To set the ID of the message, this method use the value "*" to indicate that server should generate a new ID with the current timestamp.
 fn produce_from_map<C, K, M, ID>(c: &mut C, key: K, map: M) -> RedisResult<ID>
 where
@@ -27,7 +27,7 @@ where
 }
 
 /// Produce a message to a stream from a list of items.
-/// 
+///
 /// To set the ID of the message, this method use the value "*" to indicate that server should generate a new ID with the current timestamp.
 fn produce_from_items<C, K, F, V, ID>(c: &mut C, key: K, items: &[(F, V)]) -> RedisResult<ID>
 where
