@@ -5,18 +5,18 @@ use redis::{Client, ConnectionAddr, ConnectionInfo, ProtocolVersion, RedisConnec
 #[allow(unused_imports)]
 use super::result::{RedsumerError, RedsumerResult};
 
-/// Communication protocol to be used by the client. It is an alias for [`ProtocolVersion`].
+/// Communication protocol to be used by the client.
 pub type CommunicationProtocol = ProtocolVersion;
 
-/// To hold credentials to authenticate in Redis.
+/// To hold credentials to authenticate to the server.
 ///
-/// This credentials are used to authenticate in Redis when server requires it. If server does not require it, you set it to `None`.
+/// This credentials are used to authenticate to the server when required. If server does not require it, you set it to `None`.
 #[derive(Clone)]
 pub struct ClientCredentials {
-    /// User to authenticate in Redis service.
+    /// User to authenticate to the server.
     user: String,
 
-    /// Password to authenticate in Redis service.
+    /// Password to authenticate to the server.
     password: String,
 }
 
@@ -34,8 +34,8 @@ impl ClientCredentials {
     /// Build a new instance of [`ClientCredentials`].
     ///
     /// # Arguments:
-    /// - **user**: The username to authenticate in Redis service.
-    /// - **password**: The password to authenticate in Redis service.
+    /// - **user**: The username to authenticate to the server.
+    /// - **password**: The password to authenticate to the server.
     ///
     /// # Returns:
     /// A new instance of [`ClientCredentials`].
@@ -62,22 +62,22 @@ impl Debug for ClientCredentials {
 ///
 /// `redis://[<user>][:<password>@]<host>:<port>/<db>`
 ///
-/// *user* and *password* are optional. If you don't need to authenticate in Redis, you can ignore them. *port* and *db* are mandatory for the connection. Another connection URL formats are not implemented yet.
+/// *user* and *password* are optional. If you don't need to authenticate to the server, you can ignore them. *port* and *db* are mandatory for the connection. Another connection URL formats are not implemented yet.
 #[derive(Debug, Clone)]
 pub struct ClientArgs {
-    /// Credentials to authenticate in Redis.
+    /// Credentials to authenticate to the server.
     credentials: Option<ClientCredentials>,
 
-    /// Host to connect to Redis.
+    /// Host to connect to the server.
     host: String,
 
-    /// Redis server port.
+    /// Server port.
     port: u16,
 
-    /// Redis database number.
+    /// Database number.
     db: i64,
 
-    /// Redis protocol version to communicate with the server.
+    /// Protocol version to communicate with the server.
     protocol: CommunicationProtocol,
 }
 
@@ -110,11 +110,11 @@ impl ClientArgs {
     /// Create a new instance of [`ClientArgs`].
     ///
     /// # Arguments:
-    /// - **credentials**: Credentials to authenticate in Redis.
-    /// - **host**: Host to connect to Redis.
-    /// - **port**: Redis server port.
-    /// - **db**: Redis database
-    /// - **protocol**: Redis protocol version to communicate with the server.
+    /// - **credentials**: Credentials to authenticate to the server.
+    /// - **host**: Host to connect to the server.
+    /// - **port**: Server port.
+    /// - **db**: Database number.
+    /// - **protocol**: Protocol version to communicate with the server.
     ///
     /// # Returns:
     /// A new instance of [`ClientArgs`].
@@ -136,7 +136,7 @@ impl ClientArgs {
 }
 
 /// To build a new instance of [`Client`].
-pub trait RedisClientBuilder {
+pub trait ClientBuilder {
     /// Build a new instance of [`Client`].
     ///
     /// # Arguments:
@@ -147,7 +147,7 @@ pub trait RedisClientBuilder {
     fn build(&self) -> RedsumerResult<Client>;
 }
 
-impl RedisClientBuilder for ClientArgs {
+impl ClientBuilder for ClientArgs {
     fn build(&self) -> RedsumerResult<Client> {
         let addr: ConnectionAddr =
             ConnectionAddr::Tcp(String::from(self.get_host()), self.get_port());

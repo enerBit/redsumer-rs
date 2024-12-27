@@ -4,26 +4,29 @@ use tracing::{debug, error};
 #[allow(unused_imports)]
 use crate::redsumer_core::result::{RedsumerError, RedsumerResult};
 
+/// Verify the connection to the server.
+/// 
+/// This method sends a `PING` command to the server to verify the connection and returns `PONG` if the connection was verified successfully.
 fn ping<C>(c: &mut C) -> RedisResult<String>
 where
     C: Commands,
 {
     match c.check_connection() {
         true => {
-            debug!("The connection to the Redis server was verified");
+            debug!("The connection to the server was verified");
             Ok("PONG".into())
         }
         false => {
-            let e: &str = "The connection to the Redis server could not be verified. Please verify the client configuration or server availability";
+            let e: &str = "The connection to the server could not be verified. Please verify the client configuration or server availability";
             error!(e);
             Err(RedisError::from((ErrorKind::ClientError, e)))
         }
     }
 }
 
-/// A trait to verify the connection to the Redis server.
+/// A trait to verify the connection to the server.
 pub trait VerifyConnection {
-    /// Verify the connection to the Redis server.
+    /// Verify the connection to the server.
     ///
     /// # Arguments:
     /// - No arguments.
@@ -72,6 +75,6 @@ mod test_connection {
 
         // Verify the connection to the server:
         assert!(ping_result.is_err());
-        assert_eq!(ping_result.unwrap_err().to_string(), "The connection to the Redis server could not be verified. Please verify the client configuration or server availability- ClientError");
+        assert_eq!(ping_result.unwrap_err().to_string(), "The connection to the server could not be verified. Please verify the client configuration or server availability- ClientError");
     }
 }

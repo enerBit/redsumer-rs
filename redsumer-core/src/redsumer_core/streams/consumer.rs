@@ -53,7 +53,7 @@ where
     }
 }
 
-/// Verify if a stream exists in Redis Stream service.
+/// Verify if a stream exists.
 fn verify_if_stream_exists<C, K>(conn: &mut C, key: K) -> RedsumerResult<()>
 where
     C: Commands,
@@ -82,6 +82,8 @@ where
 }
 
 /// Create a consumer group in a stream.
+/// 
+/// if the consumer group already exists, the function will return a success result with a `false` value. If the consumer group does not exist, the function will create it and return a success result with a `true` value.
 fn create_consumer_group<C, K, G, ID>(
     conn: &mut C,
     key: K,
@@ -283,15 +285,15 @@ where
     }
 }
 
-/// A trait that bundles methods for consuming messages from a Redis stream
+/// A trait that bundles methods for consuming messages from a stream.
 pub trait ConsumerCommands<K>
 where
     K: ToRedisArgs,
 {
-    /// Verify if a stream exists in Redis Stream service.
+    /// Verify if a stream exists.
     ///
     /// # Arguments:
-    /// - **key**: A stream key, which must implement the `ToRedisArgs` trait.
+    /// - **key**: A stream key.
     ///
     /// # Returns:
     /// A [`RedsumerResult`] with the result of the operation.
@@ -300,12 +302,12 @@ where
     /// If an error occurs, the function will return an error result.
     fn verify_if_stream_exists(&mut self, key: K) -> RedsumerResult<()>;
 
-    /// Create a consumer group in a Redis stream.
+    /// Create a consumer group in a stream..
     ///
     /// # Arguments:
-    /// - **key**: A stream key, which must implement the `ToRedisArgs` trait.
-    /// - **group**: A consumers group, which must implement the `ToRedisArgs` trait.
-    /// - **since_id**: The ID of the message to start consuming, which must implement the `ToRedisArgs` trait.
+    /// - **key**: A stream key.
+    /// - **group**: A consumers group.
+    /// - **since_id**: The message ID to start consuming.
     ///
     /// # Returns:
     /// A [`RedsumerResult`] with the result of the operation.
@@ -325,9 +327,9 @@ where
     /// Read new messages from a stream.
     ///
     /// # Arguments:
-    /// - **key**: A stream key, which must implement the `ToRedisArgs` trait.
-    /// - **group**: A consumers group, which must implement the `ToRedisArgs` trait.
-    /// - **consumer**: A consumer name, which must implement the `ToRedisArgs` trait.
+    /// - **key**: A stream key.
+    /// - **group**: A consumers group.
+    /// - **consumer**: A consumer name.
     /// - **count**: The number of messages to read.
     /// - **block**: The time to block waiting for new messages.
     ///
@@ -350,10 +352,10 @@ where
     /// Read pending messages from a stream.
     ///
     /// # Arguments:
-    /// - **key**: A stream key, which must implement the `ToRedisArgs` trait.
-    /// - **group**: A consumers group, which must implement the `ToRedisArgs` trait.
-    /// - **consumer**: A consumer name, which must implement the `ToRedisArgs` trait.
-    /// - **latest_pending_message_id**: The ID of the latest pending message, which must implement the `ToRedisArgs` trait.
+    /// - **key**: A stream key.
+    /// - **group**: A consumers group.
+    /// - **consumer**: A consumer name.
+    /// - **latest_pending_message_id**: The latest pending message ID.
     /// - **count**: The number of messages to read.
     ///
     /// # Returns:
@@ -376,11 +378,11 @@ where
     /// Claim pending messages from a stream.
     ///
     /// # Arguments:
-    /// - **key**: A stream key, which must implement the `ToRedisArgs` trait.
-    /// - **group**: A consumers group, which must implement the `ToRedisArgs` trait.
-    /// - **consumer**: A consumer name, which must implement the `ToRedisArgs` trait.
+    /// - **key**: A stream key.
+    /// - **group**: A consumers group.
+    /// - **consumer**: A consumer name.
     /// - **min_idle_time**: The minimum idle time in milliseconds.
-    /// - **next_id_to_claim**: The next ID to claim, which must implement the `ToRedisArgs` trait.
+    /// - **next_id_to_claim**: The next ID to claim.
     /// - **count**: The number of messages to claim.
     ///
     /// # Returns:
@@ -404,10 +406,10 @@ where
     /// Verify if a message is still in the consumer pending list.
     ///
     /// # Arguments:
-    /// - **key**: A stream key, which must implement the `ToRedisArgs` trait.
-    /// - **group**: A consumers group, which must implement the `ToRedisArgs` trait.
-    /// - **consumer**: A consumer name, which must implement the `ToRedisArgs` trait.
-    /// - **id**: The ID of the message to verify, which must implement the `ToRedisArgs` trait.
+    /// - **key**: A stream key.
+    /// - **group**: A consumers group.
+    /// - **consumer**: A consumer name.
+    /// - **id**: The message ID to verify.
     ///
     /// # Returns:
     /// A [`RedsumerResult`] with a boolean value. If the message is still in the consumer pending list, the function will return `true`. If the message is not in the consumer pending list, the function will return `false`. If an error occurs, the function will return an error result.
@@ -427,12 +429,12 @@ where
         CN: ToRedisArgs,
         ID: ToRedisArgs;
 
-    /// Acknowledge a message in a consumer group.
+    /// Ack a message in a consumer group.
     ///
     /// # Arguments:
-    /// - **key**: A stream key, which must implement the `ToRedisArgs` trait.
-    /// - **group**: A consumers group, which must implement the `ToRedisArgs` trait.
-    /// - **id**: The ID of the message to acknowledge, which must implement the `ToRedisArgs` trait.
+    /// - **key**: A stream key.
+    /// - **group**: A consumers group.
+    /// - **id**: The message ID to ack.
     ///
     /// # Returns:
     /// A [`RedsumerResult`] with a boolean value. If the message was successfully acknowledged, the function will return `true`. If the message was not acknowledged, the function will return `false`. If an error occurs, the function will return an error result.
