@@ -125,9 +125,9 @@ jobs:
     needs: Tests
     strategy:
       matrix:
-        crate:
+        package_folder:
           - redsumer-core
-          - redsumer
+          - redsumer-rs
 
     steps:
       - name: "Repository: Fetch"
@@ -137,4 +137,4 @@ jobs:
         uses: EmbarkStudios/cargo-deny-action@v1
         with:
           command: check
-          arguments: --package ${{ matrix.crate }} --all-features
+          arguments: --manifest-path ./${{ matrix.package_folder }} --all-features
