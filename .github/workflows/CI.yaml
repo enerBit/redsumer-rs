@@ -122,7 +122,7 @@ jobs:
 
   Security:
     runs-on: ubuntu-24.04
-    needs: Docs
+    needs: Tests
     strategy:
       matrix:
         package_folder:
