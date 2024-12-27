@@ -137,4 +137,6 @@ jobs:
         uses: EmbarkStudios/cargo-deny-action@v1
         with:
           command: check
-          arguments: --manifest-path ./${{ matrix.package_folder }} --all-features
+          log-level: warn
+          manifest-path: ./${{ matrix.package_folder }}/Cargo.toml
+          arguments: --all-features
