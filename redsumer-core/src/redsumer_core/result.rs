@@ -1,3 +1,4 @@
+//! Result types for package operations.
 use redis::RedisError;
 
 /// Error type for *redsumer* operations.

@@ -1,3 +1,4 @@
+//! Server connection utilities.
 use redis::{Commands, ErrorKind, RedisError, RedisResult};
 use tracing::{debug, error};
 

@@ -1,3 +1,4 @@
+//! Utilities to consume messages from a stream.
 use redis::{
     streams::{
         StreamAutoClaimOptions, StreamAutoClaimReply, StreamId, StreamPendingCountReply,
@@ -15,6 +16,7 @@ use crate::redsumer_core::{
     },
 };
 
+/// The beginning of time ID.
 pub const BEGINNING_OF_TIME_ID: &str = "0-0";
 
 /// Get StreamIds from a StreamReadReply by key.
