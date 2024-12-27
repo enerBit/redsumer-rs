@@ -4,7 +4,9 @@ use tracing::{debug, error};
 #[allow(unused_imports)]
 use crate::redsumer_core::result::{RedsumerError, RedsumerResult};
 
-/// Produce a message to a Redis stream from a map. To set the ID of the message, this method use the value "*" to indicate that Redis should generate a new ID with the current timestamp.
+/// Produce a message to a stream from a map.
+///
+/// To set the ID of the message, this method use the value "*" to indicate that server should generate a new ID with the current timestamp.
 fn produce_from_map<C, K, M, ID>(c: &mut C, key: K, map: M) -> RedisResult<ID>
 where
     C: Commands,
@@ -24,7 +26,9 @@ where
     }
 }
 
-/// Produce a message to a Redis stream from a list of items. To set the ID of the message, this method use the value "*" to indicate that Redis should generate a new ID with the current timestamp.
+/// Produce a message to a stream from a list of items.
+///
+/// To set the ID of the message, this method use the value "*" to indicate that server should generate a new ID with the current timestamp.
 fn produce_from_items<C, K, F, V, ID>(c: &mut C, key: K, items: &[(F, V)]) -> RedisResult<ID>
 where
     C: Commands,
@@ -45,13 +49,13 @@ where
     }
 }
 
-/// A trait that bundles methods for producing messages in a Redis stream
+/// A trait that bundles methods for producing messages to a stream
 pub trait ProducerCommands {
-    /// Produce a message to a Redis stream from a map.
+    /// Produce a message to a stream from a map.
     ///
     /// # Arguments:
-    /// - **key**: The key of the Redis stream, which must implement the `ToRedisArgs` trait.
-    /// - **map**: A map with the message fields and values, which must implement the `ToRedisArgs` trait.
+    /// - **key**: The stream key.
+    /// - **map**: A map with the fields and values of the message.
     ///
     /// # Returns:
     /// A [`RedsumerResult`] with the message ID if the message was produced successfully. Otherwise, a [`RedsumerError`] is returned.
@@ -60,11 +64,11 @@ pub trait ProducerCommands {
         K: ToRedisArgs,
         M: ToRedisArgs;
 
-    /// Produce a message to a Redis stream from a list of items.
+    /// Produce a message to a stream from a list of items.
     ///
     /// # Arguments:
-    ///  - **key**: The key of the Redis stream, which must implement the `ToRedisArgs` trait.
-    /// - **items**: A list of tuples with the message fields and values, which must implement the `ToRedisArgs` trait.
+    ///  - **key**: The stream key.
+    /// - **items**: A list of tuples with the fields and values of the message.
     ///
     /// # Returns:
     /// A [`RedsumerResult`] with the message ID if the message was produced successfully. Otherwise, a [`RedsumerError`] is returned.
