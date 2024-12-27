@@ -1,0 +1,142 @@
+name: "CI: Workspace"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: "0 5 * * 0"
+
+env:
+  MIN_LINE_COVERAGE_TARGET: 90
+
+jobs:
+  Config:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: "Repository: Fetch"
+        uses: actions/checkout@v4
+
+      - name: "Setup: Install Rust"
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: "Setup: Install Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+
+      - name: "Setup: Install Taplo"
+        uses: taiki-e/install-action@v2
+        with:
+          tool: taplo-cli
+
+      - name: "Setup: Install yamlfmt"
+        run: go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+
+      - name: "Step: Verify YAML Files Format"
+        run: yamlfmt --lint .
+
+      - name: "Step: Verify TOML Files Format"
+        run: taplo fmt --check --diff --verbose
+
+      - name: "Step: Verify Crates Manifest"
+        run: cargo verify-project --verbose
+
+  Build:
+    runs-on: ubuntu-20.04
+    needs: Config
+    strategy:
+      matrix:
+        crate:
+          - redsumer-core
+          - redsumer
+
+    steps:
+      - name: "Repository: Fetch"
+        uses: actions/checkout@v4
+
+      - name: "Setup: Install Rust"
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt, clippy
+
+      - name: "Step: Fetch Dependencies"
+        run: cargo fetch
+
+      - name: "Step: Build"
+        run: cargo build --package ${{ matrix.crate }} --all-features
+
+      - name: "Step: Format"
+        run: cargo fmt --package ${{ matrix.crate }} --check
+
+      - name: "Step: Lints"
+        run: cargo clippy --package ${{ matrix.crate }} --all-features
+
+  Docs:
+    runs-on: ubuntu-20.04
+    needs: Build
+    strategy:
+      matrix:
+        crate:
+          - redsumer-core
+          - redsumer
+
+    steps:
+      - name: "Repository: Fetch"
+        uses: actions/checkout@v4
+
+      - name: "Setup: Install Rust"
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: "Step: Build Doc"
+        run: cargo doc --package ${{ matrix.crate }} --all-features --document-private-items --verbose
+
+      - name: "Step: Doc Tests"
+        run: cargo test --package ${{ matrix.crate }} --all-features --doc
+
+  Tests:
+    runs-on: ubuntu-20.04
+    needs: Docs
+    strategy:
+      matrix:
+        crate:
+          - redsumer-core
+          - redsumer
+
+    steps:
+      - name: "Repository: Fetch"
+        uses: actions/checkout@v4
+
+      - name: "Setup: Install Rust, cargo-llvm-cov and cargo-nextest"
+        uses: taiki-e/install-action@v2.33.22
+        with:
+          tool: cargo-llvm-cov,cargo-nextest
+
+      - name: "Step: Tests"
+        run: cargo llvm-cov nextest --package ${{ matrix.crate }} --all-features --show-missing-lines --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
+
+  Security:
+    runs-on: ubuntu-24.04
+    needs: Tests
+    strategy:
+      matrix:
+        package_folder:
+          - redsumer-core
+          - redsumer-rs
+
+    steps:
+      - name: "Repository: Fetch"
+        uses: actions/checkout@v4
+
+      - name: "Step: Security Analysis For Rust"
+        uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          command: check
+          log-level: warn
+          manifest-path: ./${{ matrix.package_folder }}/Cargo.toml
+          arguments: --all-features
