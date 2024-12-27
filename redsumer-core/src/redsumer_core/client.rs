@@ -1,3 +1,4 @@
+//! Resources to create a client to connect to a server.
 use std::fmt::Debug;
 
 use redis::{Client, ConnectionAddr, ConnectionInfo, ProtocolVersion, RedisConnectionInfo};

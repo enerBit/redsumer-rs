@@ -1,3 +1,4 @@
+//! Utilities to produce messages to a stream.
 use redis::{Commands, FromRedisValue, RedisResult, ToRedisArgs};
 use tracing::{debug, error};
 

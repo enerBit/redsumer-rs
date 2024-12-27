@@ -1,3 +1,4 @@
+//! Types used in the streams module for responses and requests.
 /// Stream message identifier. It is used to identify any message in a stream.
 pub type Id = String;
 
