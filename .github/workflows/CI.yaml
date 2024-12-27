@@ -101,7 +101,7 @@ jobs:
 
   Tests:
     runs-on: ubuntu-20.04
-    needs: Build
+    needs: Docs
     strategy:
       matrix:
         crate:
@@ -122,7 +122,7 @@ jobs:
 
   Security:
     runs-on: ubuntu-24.04
-    needs: Tests
+    needs: Docs
     strategy:
       matrix:
         package_folder:
