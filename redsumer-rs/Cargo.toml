@@ -1,7 +1,7 @@
 [package]
 name = "redsumer"
 description = "Lightweight implementation of Redis Streams for Rust"
-version = "0.5.2"
+version = "0.5.3"
 edition = "2021"
 license-file = "../LICENSE"
 readme = "../README.md"
