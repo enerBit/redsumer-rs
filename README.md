@@ -21,7 +21,7 @@ A lightweight implementation of Redis Streams for Rust, allowing you to manage s
 - **Produce** new messages in a specific *stream*.
 - **Consume** messages from specific *stream*, setting config parameters that allow you a flexible implementation. It also provides an option to minimize the possibility of consuming the same message simultaneously by more than one consumers from the same consumer group.
 
-## Basic Usage
+## BASIC OPERATION
 
 #### Produce a new stream message:
 
@@ -191,7 +191,103 @@ The **redis** module provides utilities from the **redis** crate. You can use th
 
 The **Value** enum represents a Redis value. It can be converted to a specific type using the **from_redis_value** function. This function can be imported from the **redis** module.
 
-## Contributing
+## DEVELOPMENT
+To try **redsumer**, follow these recommendations:
+
+#### Install required tools:
+Install the following tools required for the development process.
+
+##### [Cargo LLVM cov](https://github.com/taiki-e/cargo-llvm-cov/blob/main/README.md):
+```bash
+  cargo install cargo-llvm-cov
+```
+
+##### [Cargo Nextest](https://nexte.std):
+```bash
+  cargo install cargo-nextest
+```
+
+##### [Cargo Deny](https://embarkstudios.github.io/cargo-deny/):
+```bash
+  cargo install cargo-deny
+```
+
+##### [Taplo Client](https://taplo.tamasfe.dev):
+```bash
+  cargo install taplo-cli
+```
+
+##### [Yamlfmt](https://github.com/google/yamlfmt/blob/main/README.md):
+```bash
+  go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+```
+
+#### To format the code:
+```bash
+  cargo fmt --all
+```
+
+#### To verify the code format:
+```bash
+  cargo fmt --all --check
+```
+
+#### To verify lints:
+```bash
+  cargo clippy --workspace --all-features
+```
+
+#### To check the project:
+```bash
+  cargo check --workspace --all-features
+```
+
+#### To format TOML files:
+```bash
+  taplo fmt
+```
+
+#### To verify the TOML files format:
+```bash
+  taplo fmt --check --verbose  --diff
+```
+
+#### To check correctness of crate manifest:
+```bash
+  cargo verify-project --verbose
+```
+
+#### To format yaml files:
+```bash
+  yamlfmt .
+```
+
+#### To verify the yaml files format:
+```bash
+  yamlfmt --lint .
+```
+
+#### To generate the documentation:
+```bash
+  cargo doc --workspace --all-features --document-private-items --verbose --open
+```
+
+#### To run doc tests:
+```bash
+  cargo test --workspace --all-features --doc
+```
+
+#### To test using llvm-cov:
+```bash
+  cargo llvm-cov nextest --workspace --all-features --show-missing-lines --open
+```
+
+### Security analysis:
+```bash
+  cargo deny --log-level debug check
+```
+
+## CONTRIBUTING
 
 We welcome contributions to **redsumer**. Here are some ways you can contribute:
 

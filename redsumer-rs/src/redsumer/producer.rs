@@ -1,10 +1,9 @@
-use redis::{Client, ToRedisArgs};
+use redis::{Client, Commands, ToRedisArgs};
 use tracing::{debug, info};
 
 #[allow(unused_imports)]
 use crate::core::{
     client::{ClientArgs, ClientCredentials, RedisClientBuilder},
-    connection::VerifyConnection,
     result::{RedsumerError, RedsumerResult},
     streams::{producer::ProducerCommands, types::Id},
 };
@@ -101,7 +100,7 @@ impl Producer {
         );
 
         let mut client: Client = args.build()?;
-        client.ping()?;
+        client.ping::<String>()?;
 
         info!("Producer instance created successfully and it is ready to be used");
 

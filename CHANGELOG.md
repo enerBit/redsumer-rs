@@ -5,7 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## ✨ v0.5.2 [*Pending*]
+## ✨ v0.5.3 [*Pending*]
+
+### Changed:
+
+- 🚀 Update Redis version to be greater than or equal to 0.28.0. By [@JMTamayo](https://github.com/JMTamayo).
+- 🚀 Update development dependencies to the latest version. By [@JMTamayo](https://github.com/JMTamayo).
+- 🚀 Include useful commands in README.md for the development process. By [@JMTamayo](https://github.com/JMTamayo).
+
+### Removed:
+
+- ❌ Remove unnecessary module connection.rs. By [@JMTamayo](https://github.com/JMTamayo).
+- ❌ Remove Makefile. By [@JMTamayo](https://github.com/JMTamayo).
+
+## ✨ v0.5.2 [2024-12-05]
 
 ### Added:
 
