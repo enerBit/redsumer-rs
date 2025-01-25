@@ -2,9 +2,11 @@ name: CI
 
 on:
   push:
-    branches: ["main"]
+    branches:
+    - "main"
   pull_request:
-    branches: ["main"]
+    branches:
+    - "main"
   schedule:
     - cron: "0 5 * * 0"
 
@@ -15,7 +17,7 @@ env:
 
 jobs:
   Project-Config:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Fetch Repository
         uses: actions/checkout@v4
@@ -47,7 +49,7 @@ jobs:
         run: taplo fmt --check --verbose --diff
 
   Docs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: Project-Config
     steps:
       - name: Fetch Repository
@@ -63,7 +65,7 @@ jobs:
         run: cargo test --workspace --all-features --doc
 
   Build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: Project-Config
     steps:
       - name: Fetch Repository
@@ -84,7 +86,7 @@ jobs:
         run: cargo build --workspace --all-features
 
   Tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: Build
     steps:
       - name: Fetch Repository
@@ -99,7 +101,7 @@ jobs:
         run: cargo llvm-cov nextest --workspace --all-features --show-missing-lines --summary-only --fail-under-lines ${{ env.MIN_LINE_COVERAGE_TARGET }}
 
   Security:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: Build
     steps:
       - name: Fetch Repository
