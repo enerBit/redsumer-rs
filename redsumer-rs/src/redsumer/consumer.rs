@@ -1,11 +1,10 @@
-use redis::{streams::StreamId, Client};
+use redis::{streams::StreamId, Client, Commands};
 use tracing::{debug, info};
 
 use crate::core::streams::types::{LatestPendingMessageId, NextIdToClaim};
 #[allow(unused_imports)]
 use crate::core::{
     client::{ClientArgs, RedisClientBuilder},
-    connection::VerifyConnection,
     result::{RedsumerError, RedsumerResult},
     streams::{
         consumer::{ConsumerCommands, BEGINNING_OF_TIME_ID},
@@ -437,7 +436,7 @@ impl Consumer {
         );
 
         let mut client: Client = args.build()?;
-        client.ping()?;
+        client.ping::<String>()?;
 
         client.verify_if_stream_exists(config.get_stream_name())?;
         client.create_consumer_group(
