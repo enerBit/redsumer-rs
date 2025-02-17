@@ -18,3 +18,6 @@ Cargo.lock
 
 # Remove .idea folder:
 *.idea
+
+# Remove .DS_Store file:
+.DS_Store
